@@ -1,5 +1,6 @@
 """
 SINPE Service - Core business logic for SINPE transfers
+Enhanced with transaction monitoring and improved security
 """
 
 from app.models import (
@@ -9,11 +10,13 @@ from app.models import (
     PhoneLink,
     SinpeSubscription,
     Transaction,
-)  # , UserAccount
+)
+from app.services.transaction_monitoring_service import transaction_monitor
 from decimal import Decimal
 import uuid
+import logging
 
-# from datetime import datetime
+logger = logging.getLogger(__name__)
 
 
 class SinpeService:
@@ -56,9 +59,7 @@ class SinpeService:
         Returns:
             SinpeSubscription object or None
         """
-        return SinpeSubscription.query.filter_by(sinpe_number=phone).first()
-
-    @staticmethod
+        return SinpeSubscription.query.filter_by(sinpe_number=phone).first()    @staticmethod
     def send_sinpe_transfer(
         sender_phone: str,
         receiver_phone: str,
@@ -67,7 +68,7 @@ class SinpeService:
         description: str = "",
     ):
         """
-        Process SINPE mobile transfer
+        Process SINPE mobile transfer with improved atomicity and validation
 
         Args:
             sender_phone: Sender's phone number
@@ -81,24 +82,131 @@ class SinpeService:
 
         Raises:
             Exception: If transfer cannot be processed
-        """
-        # 1. Validate receiver is registered in BCCR
-        subscription = SinpeSubscription.query.filter_by(
-            sinpe_number=receiver_phone
-        ).first()
-        if not subscription:
-            raise Exception("El número de destino no está registrado en SINPE Móvil.")
+        """        try:
+            # Input validation
+            if amount <= 0:
+                raise Exception("El monto debe ser mayor a cero.")
+            
+            if not SinpeService.validate_phone_number(sender_phone):
+                raise Exception("Número de teléfono remitente inválido.")
+                
+            if not SinpeService.validate_phone_number(receiver_phone):
+                raise Exception("Número de teléfono receptor inválido.")
 
-        # 2. Get receiver account
-        receiver_link = PhoneLink.query.filter_by(phone=receiver_phone).first()
-        if not receiver_link:
-            raise Exception("No existe una cuenta vinculada al número receptor.")
+            # Pre-transaction monitoring
+            monitoring_data = {
+                "amount": amount,
+                "transaction_type": "sinpe_movil",
+                "sender_phone": sender_phone,
+                "receiver_phone": receiver_phone,
+                "currency": currency
+            }
+            
+            # Get sender account info for monitoring
+            sender_link = PhoneLink.query.filter_by(phone=sender_phone).first()
+            if sender_link:
+                from_account = Account.query.filter_by(
+                    number=sender_link.account_number
+                ).first()
+                if from_account:
+                    monitoring_data["from_account_id"] = from_account.id
 
-        to_account = Account.query.filter_by(
-            number=receiver_link.account_number
-        ).first()
-        if not to_account:
-            raise Exception("La cuenta destino no existe.")
+            # Monitor transaction for fraud
+            monitoring_result = transaction_monitor.monitor_transaction(monitoring_data)
+            
+            if not monitoring_result.get("allow_transaction", True):
+                raise Exception(
+                    f"Transacción bloqueada por seguridad. "
+                    f"Razones: {', '.join(monitoring_result.get('alerts', []))}"
+                )
+
+            if monitoring_result.get("requires_review", False):
+                logger.warning(
+                    f"Transaction requires review: Risk score {monitoring_result.get('risk_score', 0)}, "
+                    f"Alerts: {monitoring_result.get('alerts', [])}"
+                )
+
+            # 1. Validate receiver is registered in BCCR
+            subscription = SinpeSubscription.query.filter_by(
+                sinpe_number=receiver_phone
+            ).first()
+            if not subscription:
+                raise Exception("El número de destino no está registrado en SINPE Móvil.")
+
+            # 2. Get receiver account
+            receiver_link = PhoneLink.query.filter_by(phone=receiver_phone).first()
+            if not receiver_link:
+                raise Exception("No existe una cuenta vinculada al número receptor.")
+
+            to_account = Account.query.filter_by(
+                number=receiver_link.account_number
+            ).first()
+            if not to_account:
+                raise Exception("La cuenta destino no existe.")
+
+            # 3. Check if sender has local account
+            from_account_id = None
+            from_account = None
+
+            if sender_link:
+                from_account = Account.query.filter_by(
+                    number=sender_link.account_number
+                ).first()
+                if not from_account:
+                    raise Exception(
+                        "La cuenta origen vinculada al número remitente no existe."
+                    )
+
+                # Validate sufficient funds with decimal precision
+                transfer_amount = Decimal(str(amount))
+                if from_account.balance < transfer_amount:
+                    raise Exception(
+                        f"Fondos insuficientes. Saldo disponible: {from_account.balance}, "
+                        f"Monto solicitado: {transfer_amount}"
+                    )
+
+                from_account_id = from_account.id
+
+                # Deduct funds from sender (within transaction)
+                from_account.balance -= transfer_amount
+            else:
+                transfer_amount = Decimal(str(amount))
+
+            # 4. Credit funds to receiver
+            to_account.balance += transfer_amount
+
+            # 5. Create transaction record
+            transaction = Transaction(
+                transaction_id=str(uuid.uuid4()),
+                from_account_id=from_account_id,
+                to_account_id=to_account.id,
+                amount=transfer_amount,
+                currency=currency,
+                description=description,
+                sender_phone=sender_phone,
+                receiver_phone=receiver_phone,
+                status="completed",
+                transaction_type="sinpe_movil" if not from_account_id else "internal_sinpe_movil",
+            )
+
+            db.session.add(transaction)
+            
+            # Commit all changes atomically
+            db.session.commit()
+
+            # Log successful transaction
+            logger.info(
+                f"SINPE transfer completed: {sender_phone} -> {receiver_phone}, "
+                f"Amount: {transfer_amount}, Transaction ID: {transaction.transaction_id}"
+            )
+
+            return transaction
+
+        except Exception as e:
+            # Rollback on any error
+            db.session.rollback()
+            logger.error(f"SINPE transfer failed: {str(e)}")
+            raise e
 
         # 3. Check if sender has local account
         sender_link = PhoneLink.query.filter_by(phone=sender_phone).first()
@@ -140,12 +248,10 @@ class SinpeService:
         db.session.add(transaction)
         db.session.commit()
 
-        return transaction
-
-    @staticmethod
+        return transaction    @staticmethod
     def validate_phone_number(phone: str) -> bool:
         """
-        Basic phone number validation
+        Enhanced phone number validation for Costa Rican numbers
 
         Args:
             phone: Phone number to validate
@@ -153,11 +259,22 @@ class SinpeService:
         Returns:
             True if valid format, False otherwise
         """
+        if not phone:
+            return False
+            
         # Remove any non-digit characters
         clean_phone = "".join(filter(str.isdigit, phone))
 
         # Costa Rican phone numbers are typically 8 digits
-        return len(clean_phone) == 8
+        if len(clean_phone) != 8:
+            return False
+            
+        # Check if it starts with valid prefixes for Costa Rica
+        # Mobile numbers typically start with 6, 7, 8
+        # Landline numbers start with 2
+        valid_prefixes = ['2', '6', '7', '8']
+        
+        return clean_phone[0] in valid_prefixes
 
     @staticmethod
     def get_user_accounts_with_phone_links(username: str):
@@ -185,9 +302,7 @@ class SinpeService:
             account_info["phone_link"] = phone_link.to_dict() if phone_link else None
             accounts_info.append(account_info)
 
-        return accounts_info
-
-    @staticmethod
+        return accounts_info    @staticmethod
     def process_incoming_sinpe_transfer(
         sender_account: str,
         sender_bank: str,
@@ -202,7 +317,7 @@ class SinpeService:
         timestamp: str,
     ):
         """
-        Process incoming SINPE transfer from another bank
+        Process incoming SINPE transfer from another bank with improved validation
 
         Args:
             sender_account: Sender's account number
@@ -221,15 +336,30 @@ class SinpeService:
             Dict with success status and details
         """
         try:
+            # Input validation
+            if amount <= 0:
+                return {"success": False, "error": "Monto inválido"}
+            
+            if not transaction_id:
+                return {"success": False, "error": "ID de transacción requerido"}
+
+            # Check for duplicate transaction
+            existing_transaction = Transaction.query.filter_by(
+                transaction_id=transaction_id
+            ).first()
+            if existing_transaction:
+                return {
+                    "success": False, 
+                    "error": "Transacción duplicada",
+                    "transaction_id": transaction_id
+                }
+
             # Find receiver account by IBAN or account number
             receiver_acc = None
 
             # Try to find by IBAN first
             if receiver_account.startswith("CR") and "-" in receiver_account:
                 # Extract account number from IBAN
-                # clean_iban = receiver_account.replace(
-                #     "-", ""
-                # )  # Local variable `clean_iban` is assigned to but never used
                 # For now, try to match with existing accounts
                 # In a real implementation, we'd have proper IBAN to account mapping
                 potential_accounts = Account.query.all()
@@ -244,15 +374,18 @@ class SinpeService:
             if not receiver_acc:
                 return {"success": False, "error": "Cuenta destino no encontrada"}
 
+            # Convert amount to Decimal for precision
+            transfer_amount = Decimal(str(amount))
+
             # Credit funds to receiver account
-            receiver_acc.balance += Decimal(str(amount))
+            receiver_acc.balance += transfer_amount
 
             # Create transaction record
             transaction = Transaction(
                 transaction_id=transaction_id,
                 from_account_id=None,  # External transfer
                 to_account_id=receiver_acc.id,
-                amount=Decimal(str(amount)),
+                amount=transfer_amount,
                 currency=currency,
                 description=f"SINPE from {sender_bank}: {description}",
                 sender_info=f"{sender_name} ({sender_account})",
@@ -269,7 +402,8 @@ class SinpeService:
                 "success": True,
                 "transaction_id": transaction_id,
                 "receiver_account": receiver_acc.number,
-                "amount": float(amount),
+                "amount": float(transfer_amount),
+                "new_balance": float(receiver_acc.balance)
             }
 
         except Exception as e:
@@ -277,9 +411,7 @@ class SinpeService:
             return {
                 "success": False,
                 "error": f"Error procesando transferencia: {str(e)}",
-            }
-
-    @staticmethod
+            }    @staticmethod
     def process_incoming_sinpe_movil_transfer(
         sender_phone: str,
         receiver_phone: str,
@@ -290,7 +422,7 @@ class SinpeService:
         timestamp: str,
     ):
         """
-        Process incoming SINPE Móvil transfer from another bank
+        Process incoming SINPE Móvil transfer from another bank with improved validation
 
         Args:
             sender_phone: Sender's phone number
@@ -305,6 +437,27 @@ class SinpeService:
             Dict with success status and details
         """
         try:
+            # Input validation
+            if amount <= 0:
+                return {"success": False, "error": "Monto inválido"}
+            
+            if not SinpeService.validate_phone_number(receiver_phone):
+                return {"success": False, "error": "Número de teléfono receptor inválido"}
+                
+            if not transaction_id:
+                return {"success": False, "error": "ID de transacción requerido"}
+
+            # Check for duplicate transaction
+            existing_transaction = Transaction.query.filter_by(
+                transaction_id=transaction_id
+            ).first()
+            if existing_transaction:
+                return {
+                    "success": False, 
+                    "error": "Transacción duplicada",
+                    "transaction_id": transaction_id
+                }
+
             # Find receiver by phone link
             phone_link = PhoneLink.query.filter_by(phone=receiver_phone).first()
             if not phone_link:
@@ -319,15 +472,18 @@ class SinpeService:
             if not receiver_acc:
                 return {"success": False, "error": "Cuenta destino no encontrada"}
 
+            # Convert amount to Decimal for precision
+            transfer_amount = Decimal(str(amount))
+
             # Credit funds to receiver account
-            receiver_acc.balance += Decimal(str(amount))
+            receiver_acc.balance += transfer_amount
 
             # Create transaction record
             transaction = Transaction(
                 transaction_id=transaction_id,
                 from_account_id=None,  # External transfer
                 to_account_id=receiver_acc.id,
-                amount=Decimal(str(amount)),
+                amount=transfer_amount,
                 currency=currency,
                 description=f"SINPE Móvil: {description}",
                 sender_phone=sender_phone,
@@ -344,7 +500,8 @@ class SinpeService:
                 "transaction_id": transaction_id,
                 "receiver_phone": receiver_phone,
                 "receiver_account": receiver_acc.number,
-                "amount": float(amount),
+                "amount": float(transfer_amount),
+                "new_balance": float(receiver_acc.balance)
             }
 
         except Exception as e:

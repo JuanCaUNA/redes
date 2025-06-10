@@ -107,7 +107,7 @@ class BankConnectorService:
         self, target_iban: str, transfer_data: Dict
     ) -> Dict:
         """
-        Send SINPE transfer to another bank
+        Send SINPE transfer to another bank with improved error handling
 
         Args:
             target_iban: Destination IBAN
@@ -121,31 +121,51 @@ class BankConnectorService:
         if not bank_ip:
             return {"success": False, "error": "No se encontró IP del banco destino"}
 
+        # Validate required fields in transfer data
+        required_fields = ["transaction_id", "amount", "timestamp"]
+        for field in required_fields:
+            if field not in transfer_data:
+                return {"success": False, "error": f"Campo requerido faltante: {field}"}
+
         try:
             # Construct full URL
             url = f"http://{bank_ip}/api/sinpe-transfer"
 
-            # Send POST request to target bank
-            response = requests.post(
-                url,
-                json=transfer_data,
-                timeout=30,
-                headers={"Content-Type": "application/json"},
-            )
+            # Add retry logic for inter-bank communication
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    # Send POST request to target bank
+                    response = requests.post(
+                        url,
+                        json=transfer_data,
+                        timeout=30,
+                        headers={"Content-Type": "application/json"},
+                    )
 
-            if response.status_code == 200:
-                return {"success": True, "data": response.json()}
-            else:
-                return {
-                    "success": False,
-                    "error": f"Error del banco destino: {response.status_code}",
-                    "details": response.text,
-                }
+                    if response.status_code == 200:
+                        return {"success": True, "data": response.json()}
+                    elif response.status_code in [500, 502, 503, 504]:
+                        # Server errors - retry
+                        if attempt < max_retries - 1:
+                            continue
+                    else:
+                        return {
+                            "success": False,
+                            "error": f"Error del banco destino: {response.status_code}",
+                            "details": response.text,
+                        }
+                except requests.exceptions.Timeout:
+                    if attempt < max_retries - 1:
+                        continue
+                    return {"success": False, "error": "Timeout al conectar con banco destino"}
+                except requests.exceptions.ConnectionError:
+                    if attempt < max_retries - 1:
+                        continue
+                    return {"success": False, "error": "No se pudo conectar con banco destino"}
 
-        except requests.exceptions.Timeout:
-            return {"success": False, "error": "Timeout al conectar con banco destino"}
-        except requests.exceptions.ConnectionError:
-            return {"success": False, "error": "No se pudo conectar con banco destino"}
+            return {"success": False, "error": "Máximo número de reintentos alcanzado"}
+
         except Exception as e:
             return {"success": False, "error": f"Error inesperado: {str(e)}"}
 

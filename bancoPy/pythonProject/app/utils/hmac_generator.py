@@ -4,6 +4,7 @@ FORMATO CORREGIDO: Compatible con ecosistema inter-banco usando comas como separ
 """
 
 import hashlib
+import hmac
 
 SECRET_KEY = "supersecreta123"
 
@@ -91,7 +92,7 @@ def generar_hmac(
 
 def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> bool:
     """
-    Verify HMAC signature for incoming transfer requests
+    Verify HMAC signature for incoming transfer requests with improved validation
 
     Args:
         payload: Transfer payload containing all fields
@@ -101,50 +102,82 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
     Returns:
         True if HMAC is valid, False otherwise
     """
-    try:
-        # Determine if this is a phone or account transfer
-        sender = payload.get("sender", {})
+    if not payload or not provided_hmac:
+        return False
 
-        if sender.get("phone_number"):
-            # Phone-based transfer (SINPE Móvil)
-            calculated_hmac = generate_hmac_for_phone_transfer(
-                sender["phone_number"],
-                payload["timestamp"],
-                payload["transaction_id"],
-                payload["amount"]["value"],
-                clave,
+    try:
+        # Extract required fields based on transfer type
+        if "receiver_phone" in payload:
+            # SINPE Móvil transfer
+            phone = payload.get("receiver_phone", "")
+            timestamp = payload.get("timestamp", "")
+            transaction_id = payload.get("transaction_id", "")
+            amount = payload.get("amount", 0)
+            
+            expected_hmac = generate_hmac_for_phone_transfer(
+                phone, timestamp, transaction_id, amount, clave
             )
-        elif sender.get("account_number"):
-            # Account-based transfer (SINPE)
-            calculated_hmac = generate_hmac_for_account_transfer(
-                sender["account_number"],
-                payload["timestamp"],
-                payload["transaction_id"],
-                payload["amount"]["value"],
-                clave,
+        elif "receiver_account" in payload:
+            # Traditional SINPE transfer
+            account = payload.get("receiver_account", "")
+            timestamp = payload.get("timestamp", "")
+            transaction_id = payload.get("transaction_id", "")
+            amount = payload.get("amount", 0)
+            
+            expected_hmac = generate_hmac_for_account_transfer(
+                account, timestamp, transaction_id, amount, clave
             )
         else:
-            return False
+            # Try legacy format
+            sender = payload.get("sender", {})
+            if sender.get("phone_number"):
+                # Phone-based transfer (SINPE Móvil)
+                expected_hmac = generate_hmac_for_phone_transfer(
+                    sender["phone_number"],
+                    payload["timestamp"],
+                    payload["transaction_id"],
+                    payload["amount"]["value"] if isinstance(payload["amount"], dict) else payload["amount"],
+                    clave,
+                )
+            elif sender.get("account_number"):
+                # Account-based transfer (SINPE)
+                expected_hmac = generate_hmac_for_account_transfer(
+                    sender["account_number"],
+                    payload["timestamp"],
+                    payload["transaction_id"],
+                    payload["amount"]["value"] if isinstance(payload["amount"], dict) else payload["amount"],
+                    clave,
+                )
+            else:
+                return False
 
-        return calculated_hmac == provided_hmac
-
+        # Use constant-time comparison to prevent timing attacks
+        return hmac.compare_digest(expected_hmac.lower(), provided_hmac.lower())
+        
     except Exception:
         return False
 
 
 def extract_bank_code_from_iban(iban: str) -> str:
     """
-    Extract bank code from IBAN (positions 6-8, substring 5:8)
+    Extract bank code from IBAN (positions 4-7 in clean IBAN)
 
     Args:
         iban: IBAN string
 
     Returns:
-        Bank code (3 digits)
+        Bank code (4 digits)
     """
-    if len(iban) < 8:
+    if not iban:
         return ""
-    return iban[5:8]
+    
+    # Remove dashes and ensure we have enough characters
+    clean_iban = iban.replace("-", "")
+    if len(clean_iban) < 8:
+        return ""
+    
+    # Bank code is at positions 4-7 in Costa Rican IBAN
+    return clean_iban[4:8]
 
 
 def is_external_transfer(bank_code: str) -> bool:
@@ -157,5 +190,5 @@ def is_external_transfer(bank_code: str) -> bool:
     Returns:
         True if external bank, False if internal
     """
-    LOCAL_BANK_CODE = "152"
+    LOCAL_BANK_CODE = "0152"  # Updated to 4-digit format
     return bank_code != LOCAL_BANK_CODE

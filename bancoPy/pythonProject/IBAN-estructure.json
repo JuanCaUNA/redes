@@ -1,4 +1,37 @@
 {
   "version": "1.0",
-  "pais": "Costa Rica"
+  "pais": "Costa Rica",
+  "codigo_pais": "CR",
+  "estructura": {
+    "longitud_total": 22,
+    "formato": "CR21-XXXX-XXXX-XX-XXXX-XXXX-XX",
+    "componentes": {
+      "codigo_pais": {
+        "posicion": "0-1",
+        "valor": "CR"
+      },
+      "digitos_verificacion": {
+        "posicion": "2-3",
+        "descripcion": "Dígitos de verificación IBAN"
+      },
+      "codigo_banco": {
+        "posicion": "4-7",
+        "descripcion": "Código de 4 dígitos del banco"
+      },
+      "numero_cuenta": {
+        "posicion": "8-21",
+        "descripcion": "Número de cuenta bancaria"
+      }
+    }
+  },
+  "bancos": {
+    "102": "BAC San José",
+    "138": "Banco Popular y de Desarrollo Comunal",
+    "151": "Banco Nacional de Costa Rica",
+    "152": "Banco de Costa Rica"
+  },
+  "validacion": {
+    "algoritmo": "MOD-97",
+    "descripcion": "Algoritmo de validación estándar IBAN"
+  }
 }

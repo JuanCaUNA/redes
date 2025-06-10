@@ -1,6 +1,30 @@
 [
   {
-    "banco": "BCR",
-    "codigo": "152"
+    "banco": "Banco de Costa Rica",
+    "codigo": "152",
+    "contacto": "BCR Sistema SINPE",
+    "IBAN": "CR21-0152-0001-XX-XXXX-XXXX-XX",
+    "IP": "127.0.0.1:5001"
+  },
+  {
+    "banco": "Banco Nacional",
+    "codigo": "151",
+    "contacto": "BNCR Sistema SINPE", 
+    "IBAN": "CR21-0151-0001-XX-XXXX-XXXX-XX",
+    "IP": "127.0.0.1:5002"
+  },
+  {
+    "banco": "Banco Popular",
+    "codigo": "138",
+    "contacto": "BPDC Sistema SINPE",
+    "IBAN": "CR21-0138-0001-XX-XXXX-XXXX-XX", 
+    "IP": "127.0.0.1:5003"
+  },
+  {
+    "banco": "BAC San José",
+    "codigo": "102",
+    "contacto": "BAC Sistema SINPE",
+    "IBAN": "CR21-0102-0001-XX-XXXX-XXXX-XX",
+    "IP": "127.0.0.1:5004"
   }
 ]
