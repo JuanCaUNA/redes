@@ -1,4 +1,4 @@
 @echo off
-echo Este archivo ya no es necesario - GUI interfaces fueron eliminadas
-echo Use run-app.bat para ejecutar la aplicacion principal
+cd /d %~dp0
+.\.venv\Scripts\python.exe gui_simple.py
 pause

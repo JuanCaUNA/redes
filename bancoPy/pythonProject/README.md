@@ -4,6 +4,7 @@ Sistema bancario integral basado en Python que replica la funcionalidad del sist
 
 ## ✨ Características
 
+- **🖥️ Interfaz Gráfica Moderna**: GUI simple con tkinter para fácil interacción (¡NUEVA!)
 - **💻 Interfaz Terminal Rica**: Terminal interactiva con menús coloridos y formularios
 - **🌐 API REST Completa**: Backend Flask con todos los endpoints SINPE
 - **🔐 SSL/HTTPS**: Servidor seguro con certificados SSL (<https://127.0.0.1:5443>)
@@ -22,22 +23,40 @@ Sistema bancario integral basado en Python que replica la funcionalidad del sist
 - Python 3.12.4 (configurado en .venv)
 - Entorno virtual activado
 
-### Ejecutar el Sistema
+### Opción 1: Interfaz Gráfica (¡NUEVA! - Recomendada)
+
+```batch
+# Método más fácil
+run-GUI.bat
+```
+
+O alternativamente:
+
+```powershell
+.\.venv\Scripts\python.exe gui_simple.py
+```
+
+**Características de la GUI:**
+
+- 🎯 **Pestañas organizadas**: Usuarios, Cuentas, Transferencias, Enlaces, Historial
+- 🎨 **Interfaz intuitiva**: Formularios, tablas, botones
+- ⚙️ **Control del servidor integrado**: Iniciar/detener desde la GUI
+- 🔄 **Actualización automática**: Datos en tiempo real
+- 📱 **Fácil de usar**: No requiere conocimientos técnicos
+
+### Opción 2: Interfaz de Terminal
+
+```batch
+# Método clásico
+run-app.bat
+```
+
+O alternativamente:
 
 ```powershell
 # En Windows (PowerShell)
 cd pythonProject
 
-# Activar entorno virtual
-.\.venv\Scripts\Activate.ps1
-
-# Ejecutar la aplicación principal
-python main.py
-```
-
-Alternativamente, si tienes problemas con la política de ejecución:
-
-```powershell
 # Ejecutar directamente con el Python del entorno virtual
 .\.venv\Scripts\python.exe main.py
 ```

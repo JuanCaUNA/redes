@@ -20,22 +20,31 @@
 
 ## Comandos útiles para este proyecto
 
-### Ejecutar el sistema principal
+### Ejecutar el sistema
 
-- **Comando principal (recomendado)**:
+- **Interfaz Gráfica (NUEVA - Recomendada)**:
+
+    ```batch
+    run-GUI.bat
+    ```
+
+    *O alternativamente:*
+
+    ```powershell
+    .\.venv\Scripts\python.exe gui_simple.py
+    ```
+
+- **Terminal/Consola (Anterior)**:
+
+    ```batch
+    run-app.bat
+    ```
+
+    *O alternativamente:*
 
     ```powershell
     .\.venv\Scripts\python.exe main.py
     ```
-
-- **Activar entorno virtual (si es necesario)**:
-
-    ```powershell
-    .\.venv\Scripts\Activate.ps1
-    python main.py
-    ```
-
-### Comandos de desarrollo
 
 ### Comandos de desarrollo
 
