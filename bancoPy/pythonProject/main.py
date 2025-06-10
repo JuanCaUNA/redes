@@ -28,7 +28,7 @@ console = Console()
 
 class SinpeBankingSystem:
     """Optimized SINPE Banking System with SSL support"""
-    
+
     def __init__(self):
         self.app = create_app()
         self.terminal_service = TerminalService()
@@ -52,40 +52,44 @@ class SinpeBankingSystem:
         console.print("[yellow]Starting API server...[/yellow]")
 
         def run_server():
-            ssl_context = getattr(self.app, 'ssl_context', None)
-            
+            ssl_context = getattr(self.app, "ssl_context", None)
+
             if ssl_context:
                 console.print("🔐 [green]SSL certificates loaded successfully[/green]")
                 port = 5443  # Standard HTTPS port for development
                 self.app.run(
-                    host="127.0.0.1", 
-                    port=port, 
-                    debug=False, 
+                    host="127.0.0.1",
+                    port=port,
+                    debug=False,
                     use_reloader=False,
                     ssl_context=ssl_context,
-                    threaded=True
+                    threaded=True,
                 )
             else:
-                console.print("⚠️ [yellow]SSL certificates not available - using HTTP[/yellow]")
+                console.print(
+                    "⚠️ [yellow]SSL certificates not available - using HTTP[/yellow]"
+                )
                 port = 5000
                 self.app.run(
-                    host="127.0.0.1", 
-                    port=port, 
-                    debug=False, 
+                    host="127.0.0.1",
+                    port=port,
+                    debug=False,
                     use_reloader=False,
-                    threaded=True
+                    threaded=True,
                 )
 
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
         self.server_running = True
-        
+
         # Wait for server to start
         time.sleep(1)
-        ssl_context = getattr(self.app, 'ssl_context', None)
+        ssl_context = getattr(self.app, "ssl_context", None)
         port = 5443 if ssl_context else 5000
         protocol = "https" if ssl_context else "http"
-        console.print(f"✓ [green]API server started on {protocol}://127.0.0.1:{port}[/green]")
+        console.print(
+            f"✓ [green]API server started on {protocol}://127.0.0.1:{port}[/green]"
+        )
 
     def show_welcome_screen(self):
         """Display welcome screen with SSL status"""
@@ -105,13 +109,17 @@ class SinpeBankingSystem:
 
         console.print(panel)
         console.print("\n[dim]Costa Rican Payment System - Python Implementation[/dim]")
-        
+
         # Show appropriate URL based on SSL availability
-        ssl_context = getattr(self.app, 'ssl_context', None)
+        ssl_context = getattr(self.app, "ssl_context", None)
         if ssl_context:
-            console.print("[dim]🔐 API Server: https://127.0.0.1:5443 (SSL Enabled)[/dim]\n")
+            console.print(
+                "[dim]🔐 API Server: https://127.0.0.1:5443 (SSL Enabled)[/dim]\n"
+            )
         else:
-            console.print("[dim]⚠️ API Server: http://127.0.0.1:5000 (SSL Not Available)[/dim]\n")
+            console.print(
+                "[dim]⚠️ API Server: http://127.0.0.1:5000 (SSL Not Available)[/dim]\n"
+            )
 
     def show_main_menu(self):
         """Display main menu options"""
@@ -148,9 +156,9 @@ class SinpeBankingSystem:
                 self.terminal_service.handle_admin_panel()
             else:
                 console.print("[red]Invalid option. Please try again.[/red]")
-            
+
             return True
-            
+
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             return True

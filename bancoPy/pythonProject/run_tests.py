@@ -14,14 +14,10 @@ def run_command(command, description):
     """Run a command and return success status"""
     print(f"\n🔍 {description}")
     print("=" * 60)
-    
+
     try:
         result = subprocess.run(
-            command, 
-            shell=True, 
-            check=True, 
-            capture_output=False,
-            text=True
+            command, shell=True, check=True, capture_output=False, text=True
         )
         print(f"✅ {description}: PASSED")
         return True
@@ -38,49 +34,49 @@ def main():
     print("🧪 SINPE Banking System - Complete Test Suite")
     print(f"📅 Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
-    
+
     # Change to project directory
     os.chdir(r"c:\Users\juanc\Documents\GitHub\redes\bancoPy\pythonProject")
-    
+
     # Activate virtual environment and run tests
     venv_python = r".\.venv\Scripts\python.exe"
-    
+
     tests = [
         {
             "command": f"{venv_python} test_basic_optimized.py",
             "description": "Basic System Tests (PRIORITY 1)",
-            "critical": True
+            "critical": True,
         },
         {
             "command": f"{venv_python} test_essential.py",
             "description": "Essential Functionality Tests (PRIORITY 2)",
-            "critical": False
+            "critical": False,
         },
         {
             "command": f"{venv_python} test_api.py",
             "description": "API Endpoint Tests (PRIORITY 3)",
-            "critical": False
-        }
+            "critical": False,
+        },
     ]
-    
+
     passed = 0
     total = len(tests)
     critical_failed = False
-    
+
     for test in tests:
         success = run_command(test["command"], test["description"])
         if success:
             passed += 1
         elif test["critical"]:
             critical_failed = True
-    
+
     # Summary
     print("\n" + "=" * 60)
     print("📊 TEST SUMMARY")
     print("=" * 60)
     print(f"Tests Passed: {passed}/{total}")
     print(f"Success Rate: {(passed/total)*100:.1f}%")
-    
+
     if critical_failed:
         print("❌ CRITICAL TESTS FAILED - System may not be functional")
         return False

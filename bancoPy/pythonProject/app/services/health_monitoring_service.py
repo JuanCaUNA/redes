@@ -6,10 +6,12 @@ Monitors database connections, API health, inter-bank connectivity, and system p
 # Optional import for system monitoring
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
     import logging
+
     logging.warning("psutil not available - system monitoring features will be limited")
 
 import time
@@ -36,12 +38,13 @@ class SystemHealthMonitor:
             "inter_bank": {"status": "unknown", "reachable_banks": 0},
             "system": {"cpu_percent": 0, "memory_percent": 0, "disk_percent": 0},
             "transactions": {"last_24h": 0, "success_rate": 0},
-            "alerts": []
+            "alerts": [],
         }
         self.start_monitoring()
 
     def start_monitoring(self):
         """Start background health monitoring"""
+
         def monitor_loop():
             while self.monitoring_active:
                 try:
@@ -87,21 +90,21 @@ class SystemHealthMonitor:
         """Check database connectivity and performance"""
         try:
             start_time = time.time()
-            
+
             # Simple query to test connection
             result = db.session.execute(text("SELECT 1")).fetchone()
-            
+
             response_time = time.time() - start_time
-            
+
             if result and response_time < 1.0:  # Less than 1 second
                 self.health_data["database"] = {
                     "status": "healthy",
-                    "response_time": round(response_time * 1000, 2)  # Convert to ms
+                    "response_time": round(response_time * 1000, 2),  # Convert to ms
                 }
             else:
                 self.health_data["database"] = {
                     "status": "slow",
-                    "response_time": round(response_time * 1000, 2)
+                    "response_time": round(response_time * 1000, 2),
                 }
                 self.health_data["alerts"].append("Database response time is slow")
 
@@ -109,7 +112,7 @@ class SystemHealthMonitor:
             self.health_data["database"] = {
                 "status": "error",
                 "response_time": 0,
-                "error": str(e)
+                "error": str(e),
             }
             self.health_data["alerts"].append(f"Database connection failed: {str(e)}")
 
@@ -122,26 +125,26 @@ class SystemHealthMonitor:
                     "message": "psutil not available - system monitoring disabled",
                     "cpu_percent": 0,
                     "memory_percent": 0,
-                    "disk_percent": 0
+                    "disk_percent": 0,
                 }
                 return
 
             # CPU usage
             cpu_percent = psutil.cpu_percent(interval=1)
-            
+
             # Memory usage
             memory = psutil.virtual_memory()
             memory_percent = memory.percent
-            
+
             # Disk usage
-            disk = psutil.disk_usage('/')
+            disk = psutil.disk_usage("/")
             disk_percent = (disk.used / disk.total) * 100
 
             self.health_data["system"] = {
                 "cpu_percent": round(cpu_percent, 1),
                 "memory_percent": round(memory_percent, 1),
                 "disk_percent": round(disk_percent, 1),
-                "status": "healthy"
+                "status": "healthy",
             }
 
             # Generate alerts for high resource usage
@@ -150,32 +153,33 @@ class SystemHealthMonitor:
                 self.health_data["system"]["status"] = "warning"
 
             if memory_percent > 85:
-                self.health_data["alerts"].append(f"High memory usage: {memory_percent:.1f}%")
+                self.health_data["alerts"].append(
+                    f"High memory usage: {memory_percent:.1f}%"
+                )
                 self.health_data["system"]["status"] = "warning"
 
             if disk_percent > 90:
-                self.health_data["alerts"].append(f"High disk usage: {disk_percent:.1f}%")
+                self.health_data["alerts"].append(
+                    f"High disk usage: {disk_percent:.1f}%"
+                )
                 self.health_data["system"]["status"] = "critical"
 
         except Exception as e:
-            self.health_data["system"] = {
-                "status": "error",
-                "error": str(e)
-            }
+            self.health_data["system"] = {"status": "error", "error": str(e)}
 
     def _check_transaction_health(self):
         """Check transaction processing health"""
         try:
             # Get transactions from last 24 hours
             twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
-            
+
             total_transactions = Transaction.query.filter(
                 Transaction.created_at >= twenty_four_hours_ago
             ).count()
 
             successful_transactions = Transaction.query.filter(
                 Transaction.created_at >= twenty_four_hours_ago,
-                Transaction.status == "completed"
+                Transaction.status == "completed",
             ).count()
 
             success_rate = (successful_transactions / max(total_transactions, 1)) * 100
@@ -184,7 +188,7 @@ class SystemHealthMonitor:
                 "last_24h": total_transactions,
                 "successful": successful_transactions,
                 "success_rate": round(success_rate, 2),
-                "status": "healthy"
+                "status": "healthy",
             }
 
             # Generate alerts for low success rate
@@ -200,14 +204,15 @@ class SystemHealthMonitor:
                 Transaction.created_at >= one_hour_ago
             ).count()
 
-            if recent_transactions == 0 and 8 <= datetime.utcnow().hour <= 18:  # Business hours
-                self.health_data["alerts"].append("No transactions in the last hour during business hours")
+            if (
+                recent_transactions == 0 and 8 <= datetime.utcnow().hour <= 18
+            ):  # Business hours
+                self.health_data["alerts"].append(
+                    "No transactions in the last hour during business hours"
+                )
 
         except Exception as e:
-            self.health_data["transactions"] = {
-                "status": "error",
-                "error": str(e)
-            }
+            self.health_data["transactions"] = {"status": "error", "error": str(e)}
 
     def _check_inter_bank_health(self):
         """Check connectivity to other banks"""
@@ -215,24 +220,23 @@ class SystemHealthMonitor:
             # Load bank contacts
             contacts_file = os.path.join(
                 os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
-                "contactos-bancos.json"
+                "contactos-bancos.json",
             )
-            
+
             reachable_banks = 0
             total_banks = 0
-            
+
             if os.path.exists(contacts_file):
-                with open(contacts_file, 'r', encoding='utf-8') as f:
+                with open(contacts_file, "r", encoding="utf-8") as f:
                     banks = json.load(f)
-                
+
                 for bank in banks:
                     if bank.get("IP"):
                         total_banks += 1
                         try:
                             # Quick health check to bank
                             response = requests.get(
-                                f"http://{bank['IP']}/health",
-                                timeout=5
+                                f"http://{bank['IP']}/health", timeout=5
                             )
                             if response.status_code == 200:
                                 reachable_banks += 1
@@ -243,7 +247,9 @@ class SystemHealthMonitor:
                 "status": "healthy" if reachable_banks == total_banks else "partial",
                 "reachable_banks": reachable_banks,
                 "total_banks": total_banks,
-                "connectivity_rate": round((reachable_banks / max(total_banks, 1)) * 100, 1)
+                "connectivity_rate": round(
+                    (reachable_banks / max(total_banks, 1)) * 100, 1
+                ),
             }
 
             if reachable_banks < total_banks:
@@ -253,10 +259,7 @@ class SystemHealthMonitor:
                 )
 
         except Exception as e:
-            self.health_data["inter_bank"] = {
-                "status": "error",
-                "error": str(e)
-            }
+            self.health_data["inter_bank"] = {"status": "error", "error": str(e)}
 
     def _generate_alerts(self):
         """Generate system-wide alerts based on health data"""
@@ -280,7 +283,7 @@ class SystemHealthMonitor:
                 banking_logger.log_security_event(
                     "system_critical_alert",
                     {"alert": alert, "health_data": self.health_data},
-                    "CRITICAL"
+                    "CRITICAL",
                 )
 
             # Log warning alerts
@@ -288,7 +291,7 @@ class SystemHealthMonitor:
                 banking_logger.log_security_event(
                     "system_warning_alert",
                     {"alert": alert, "health_data": self.health_data},
-                    "WARNING"
+                    "WARNING",
                 )
 
         except Exception as e:
@@ -303,7 +306,7 @@ class SystemHealthMonitor:
         try:
             # Get additional metrics
             detailed_report = self.health_data.copy()
-            
+
             # Add process information (if psutil available)
             if PSUTIL_AVAILABLE:
                 try:
@@ -314,17 +317,14 @@ class SystemHealthMonitor:
                         "memory_mb": round(process.memory_info().rss / 1024 / 1024, 2),
                         "open_files": len(process.open_files()),
                         "connections": len(process.connections()),
-                        "threads": process.num_threads()
+                        "threads": process.num_threads(),
                     }
                 except Exception as e:
-                    detailed_report["process"] = {
-                        "status": "error",
-                        "error": str(e)
-                    }
+                    detailed_report["process"] = {"status": "error", "error": str(e)}
             else:
                 detailed_report["process"] = {
                     "status": "unavailable",
-                    "message": "psutil not available - process monitoring disabled"
+                    "message": "psutil not available - process monitoring disabled",
                 }
 
             # Add database connection pool info (if using SQLAlchemy with connection pooling)
@@ -336,7 +336,7 @@ class SystemHealthMonitor:
                     "checked_in": pool.checkedin(),
                     "checked_out": pool.checkedout(),
                     "overflow": pool.overflow(),
-                    "invalid": pool.invalid()
+                    "invalid": pool.invalid(),
                 }
             except:
                 pass  # Connection pool info not available
@@ -356,7 +356,7 @@ class SystemHealthMonitor:
             "last_hour": 0,
             "last_24h": 0,
             "most_common": "Log analysis not implemented",
-            "note": "Implement log file analysis for production use"
+            "note": "Implement log file analysis for production use",
         }
 
     def stop_monitoring(self):

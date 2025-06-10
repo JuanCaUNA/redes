@@ -28,23 +28,23 @@ class TransactionMonitoringService:
             "max_daily_amount": {
                 "sinpe_movil": 500000,  # CRC
                 "sinpe_transfer": 10000000,  # CRC
-                "internal": 50000000  # CRC
+                "internal": 50000000,  # CRC
             },
             "max_hourly_transactions": 10,
             "max_single_transaction": {
                 "sinpe_movil": 100000,  # CRC
                 "sinpe_transfer": 5000000,  # CRC
-                "internal": 10000000  # CRC
+                "internal": 10000000,  # CRC
             },
             "velocity_thresholds": {
                 "transactions_per_minute": 5,
-                "amount_per_minute": 200000  # CRC
+                "amount_per_minute": 200000,  # CRC
             },
             "suspicious_patterns": {
                 "round_amounts": True,  # Flag round amounts like 100000, 500000
                 "rapid_succession": 60,  # Seconds between transactions
-                "account_jumping": 5  # Max different accounts per hour
-            }
+                "account_jumping": 5,  # Max different accounts per hour
+            },
         }
 
     def monitor_transaction(self, transaction_data: Dict) -> Dict:
@@ -70,13 +70,17 @@ class TransactionMonitoringService:
             to_account_id = transaction_data.get("to_account_id")
 
             # Rule 1: Check single transaction limits
-            single_limit_check = self._check_single_transaction_limit(amount, transaction_type)
+            single_limit_check = self._check_single_transaction_limit(
+                amount, transaction_type
+            )
             if not single_limit_check["passed"]:
                 risk_score += 50
                 alerts.append(single_limit_check["message"])
 
             # Rule 2: Check daily transaction limits
-            daily_limit_check = self._check_daily_limits(from_account_id, amount, transaction_type)
+            daily_limit_check = self._check_daily_limits(
+                from_account_id, amount, transaction_type
+            )
             if not daily_limit_check["passed"]:
                 risk_score += 30
                 alerts.append(daily_limit_check["message"])
@@ -94,7 +98,9 @@ class TransactionMonitoringService:
                 alerts.extend(pattern_check["alerts"])
 
             # Rule 5: Check for unusual recipient behavior
-            recipient_check = self._check_recipient_patterns(receiver_phone, to_account_id)
+            recipient_check = self._check_recipient_patterns(
+                receiver_phone, to_account_id
+            )
             if not recipient_check["passed"]:
                 risk_score += 20
                 alerts.append(recipient_check["message"])
@@ -108,7 +114,7 @@ class TransactionMonitoringService:
                 "alerts": alerts,
                 "allow_transaction": risk_score < 70,
                 "requires_review": 40 <= risk_score < 70,
-                "monitoring_timestamp": datetime.utcnow().isoformat()
+                "monitoring_timestamp": datetime.utcnow().isoformat(),
             }
 
             # Log high-risk transactions
@@ -128,10 +134,12 @@ class TransactionMonitoringService:
                 "alerts": ["Error en monitoreo"],
                 "allow_transaction": True,
                 "requires_review": False,
-                "error": str(e)
+                "error": str(e),
             }
 
-    def _check_single_transaction_limit(self, amount: Decimal, transaction_type: str) -> Dict:
+    def _check_single_transaction_limit(
+        self, amount: Decimal, transaction_type: str
+    ) -> Dict:
         """Check if transaction exceeds single transaction limits"""
         limits = self.fraud_rules["max_single_transaction"]
         limit = limits.get(transaction_type, limits.get("internal", 10000000))
@@ -139,12 +147,14 @@ class TransactionMonitoringService:
         if amount > limit:
             return {
                 "passed": False,
-                "message": f"Transacción excede límite individual ({limit:,.0f} CRC)"
+                "message": f"Transacción excede límite individual ({limit:,.0f} CRC)",
             }
-        
+
         return {"passed": True, "message": ""}
 
-    def _check_daily_limits(self, account_id: Optional[int], amount: Decimal, transaction_type: str) -> Dict:
+    def _check_daily_limits(
+        self, account_id: Optional[int], amount: Decimal, transaction_type: str
+    ) -> Dict:
         """Check daily transaction limits for account"""
         if not account_id:
             return {"passed": True, "message": ""}
@@ -156,7 +166,7 @@ class TransactionMonitoringService:
                 and_(
                     Transaction.from_account_id == account_id,
                     func.date(Transaction.created_at) == today,
-                    Transaction.status == "completed"
+                    Transaction.status == "completed",
                 )
             ).all()
 
@@ -171,7 +181,7 @@ class TransactionMonitoringService:
             if new_total > daily_limit:
                 return {
                     "passed": False,
-                    "message": f"Excede límite diario ({daily_limit:,.0f} CRC). Actual: {new_total:,.0f} CRC"
+                    "message": f"Excede límite diario ({daily_limit:,.0f} CRC). Actual: {new_total:,.0f} CRC",
                 }
 
             return {"passed": True, "message": ""}
@@ -180,25 +190,32 @@ class TransactionMonitoringService:
             logger.error(f"Error checking daily limits: {str(e)}")
             return {"passed": True, "message": ""}
 
-    def _check_velocity_limits(self, account_id: Optional[int], phone: Optional[str]) -> Dict:
+    def _check_velocity_limits(
+        self, account_id: Optional[int], phone: Optional[str]
+    ) -> Dict:
         """Check transaction velocity (frequency)"""
         try:
             # Check last minute activity
             one_minute_ago = datetime.utcnow() - timedelta(minutes=1)
-            
+
             # Check by account
             if account_id:
                 recent_by_account = Transaction.query.filter(
                     and_(
                         Transaction.from_account_id == account_id,
-                        Transaction.created_at >= one_minute_ago
+                        Transaction.created_at >= one_minute_ago,
                     )
                 ).count()
 
-                if recent_by_account >= self.fraud_rules["velocity_thresholds"]["transactions_per_minute"]:
+                if (
+                    recent_by_account
+                    >= self.fraud_rules["velocity_thresholds"][
+                        "transactions_per_minute"
+                    ]
+                ):
                     return {
                         "passed": False,
-                        "message": "Demasiadas transacciones por minuto desde esta cuenta"
+                        "message": "Demasiadas transacciones por minuto desde esta cuenta",
                     }
 
             # Check by phone
@@ -206,14 +223,19 @@ class TransactionMonitoringService:
                 recent_by_phone = Transaction.query.filter(
                     and_(
                         Transaction.sender_phone == phone,
-                        Transaction.created_at >= one_minute_ago
+                        Transaction.created_at >= one_minute_ago,
                     )
                 ).count()
 
-                if recent_by_phone >= self.fraud_rules["velocity_thresholds"]["transactions_per_minute"]:
+                if (
+                    recent_by_phone
+                    >= self.fraud_rules["velocity_thresholds"][
+                        "transactions_per_minute"
+                    ]
+                ):
                     return {
                         "passed": False,
-                        "message": "Demasiadas transacciones por minuto desde este teléfono"
+                        "message": "Demasiadas transacciones por minuto desde este teléfono",
                     }
 
             return {"passed": True, "message": ""}
@@ -231,7 +253,9 @@ class TransactionMonitoringService:
 
         # Check for round amounts
         if self.fraud_rules["suspicious_patterns"]["round_amounts"]:
-            if amount % 10000 == 0 and amount >= 50000:  # Round amounts like 50k, 100k, etc.
+            if (
+                amount % 10000 == 0 and amount >= 50000
+            ):  # Round amounts like 50k, 100k, etc.
                 alerts.append("Monto redondo sospechoso")
                 risk_score += 10
 
@@ -241,8 +265,10 @@ class TransactionMonitoringService:
             try:
                 recent_transactions = Transaction.query.filter(
                     and_(
-                        Transaction.from_account_id == transaction_data["from_account_id"],
-                        Transaction.created_at >= datetime.utcnow() - timedelta(seconds=60)
+                        Transaction.from_account_id
+                        == transaction_data["from_account_id"],
+                        Transaction.created_at
+                        >= datetime.utcnow() - timedelta(seconds=60),
                     )
                 ).count()
 
@@ -253,13 +279,11 @@ class TransactionMonitoringService:
             except Exception:
                 pass
 
-        return {
-            "passed": risk_score == 0,
-            "alerts": alerts,
-            "risk_score": risk_score
-        }
+        return {"passed": risk_score == 0, "alerts": alerts, "risk_score": risk_score}
 
-    def _check_recipient_patterns(self, receiver_phone: Optional[str], to_account_id: Optional[int]) -> Dict:
+    def _check_recipient_patterns(
+        self, receiver_phone: Optional[str], to_account_id: Optional[int]
+    ) -> Dict:
         """Check for unusual recipient patterns"""
         try:
             if not receiver_phone and not to_account_id:
@@ -267,14 +291,14 @@ class TransactionMonitoringService:
 
             # Check if recipient receives unusually high volume
             one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-            
+
             received_count = 0
             if receiver_phone:
                 received_count += Transaction.query.filter(
                     and_(
                         Transaction.receiver_phone == receiver_phone,
                         Transaction.created_at >= one_hour_ago,
-                        Transaction.status == "completed"
+                        Transaction.status == "completed",
                     )
                 ).count()
 
@@ -283,14 +307,14 @@ class TransactionMonitoringService:
                     and_(
                         Transaction.to_account_id == to_account_id,
                         Transaction.created_at >= one_hour_ago,
-                        Transaction.status == "completed"
+                        Transaction.status == "completed",
                     )
                 ).count()
 
             if received_count > 20:  # More than 20 transactions per hour
                 return {
                     "passed": False,
-                    "message": "Receptor con volumen inusualmente alto"
+                    "message": "Receptor con volumen inusualmente alto",
                 }
 
             return {"passed": True, "message": ""}
@@ -314,33 +338,37 @@ class TransactionMonitoringService:
         """Get transaction statistics for monitoring dashboard"""
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=hours)
-            
+
             # Total transactions
             total_transactions = Transaction.query.filter(
                 Transaction.created_at >= cutoff_time
             ).count()
 
             # Total amount
-            total_amount = db.session.query(
-                func.sum(Transaction.amount)
-            ).filter(
-                Transaction.created_at >= cutoff_time
-            ).scalar() or 0
+            total_amount = (
+                db.session.query(func.sum(Transaction.amount))
+                .filter(Transaction.created_at >= cutoff_time)
+                .scalar()
+                or 0
+            )
 
             # Transactions by type
-            transactions_by_type = db.session.query(
-                Transaction.transaction_type,
-                func.count(Transaction.id),
-                func.sum(Transaction.amount)
-            ).filter(
-                Transaction.created_at >= cutoff_time
-            ).group_by(Transaction.transaction_type).all()
+            transactions_by_type = (
+                db.session.query(
+                    Transaction.transaction_type,
+                    func.count(Transaction.id),
+                    func.sum(Transaction.amount),
+                )
+                .filter(Transaction.created_at >= cutoff_time)
+                .group_by(Transaction.transaction_type)
+                .all()
+            )
 
             # Failed transactions
             failed_transactions = Transaction.query.filter(
                 and_(
                     Transaction.created_at >= cutoff_time,
-                    Transaction.status != "completed"
+                    Transaction.status != "completed",
                 )
             ).count()
 
@@ -349,16 +377,14 @@ class TransactionMonitoringService:
                 "total_transactions": total_transactions,
                 "total_amount": float(total_amount),
                 "failed_transactions": failed_transactions,
-                "success_rate": (total_transactions - failed_transactions) / max(total_transactions, 1) * 100,
+                "success_rate": (total_transactions - failed_transactions)
+                / max(total_transactions, 1)
+                * 100,
                 "transactions_by_type": [
-                    {
-                        "type": tx_type,
-                        "count": count,
-                        "amount": float(amount or 0)
-                    }
+                    {"type": tx_type, "count": count, "amount": float(amount or 0)}
                     for tx_type, count, amount in transactions_by_type
                 ],
-                "generated_at": datetime.utcnow().isoformat()
+                "generated_at": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
@@ -367,6 +393,7 @@ class TransactionMonitoringService:
 
     def _start_background_monitoring(self):
         """Start background monitoring thread"""
+
         def background_monitor():
             while self.monitoring_enabled:
                 try:
@@ -385,25 +412,33 @@ class TransactionMonitoringService:
         try:
             # Check for accounts with unusual activity in last hour
             one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-            
-            suspicious_accounts = db.session.query(
-                Transaction.from_account_id,
-                func.count(Transaction.id).label('tx_count'),
-                func.sum(Transaction.amount).label('total_amount')
-            ).filter(
-                and_(
-                    Transaction.created_at >= one_hour_ago,
-                    Transaction.from_account_id.isnot(None)
+
+            suspicious_accounts = (
+                db.session.query(
+                    Transaction.from_account_id,
+                    func.count(Transaction.id).label("tx_count"),
+                    func.sum(Transaction.amount).label("total_amount"),
                 )
-            ).group_by(Transaction.from_account_id).having(
-                or_(
-                    func.count(Transaction.id) > 15,  # More than 15 transactions
-                    func.sum(Transaction.amount) > 1000000  # More than 1M CRC
+                .filter(
+                    and_(
+                        Transaction.created_at >= one_hour_ago,
+                        Transaction.from_account_id.isnot(None),
+                    )
                 )
-            ).all()
+                .group_by(Transaction.from_account_id)
+                .having(
+                    or_(
+                        func.count(Transaction.id) > 15,  # More than 15 transactions
+                        func.sum(Transaction.amount) > 1000000,  # More than 1M CRC
+                    )
+                )
+                .all()
+            )
 
             if suspicious_accounts:
-                logger.warning(f"Found {len(suspicious_accounts)} accounts with unusual activity")
+                logger.warning(
+                    f"Found {len(suspicious_accounts)} accounts with unusual activity"
+                )
                 for account_id, tx_count, total_amount in suspicious_accounts:
                     logger.warning(
                         f"Account {account_id}: {tx_count} transactions, "

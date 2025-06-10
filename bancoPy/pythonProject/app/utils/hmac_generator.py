@@ -113,7 +113,7 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
             timestamp = payload.get("timestamp", "")
             transaction_id = payload.get("transaction_id", "")
             amount = payload.get("amount", 0)
-            
+
             expected_hmac = generate_hmac_for_phone_transfer(
                 phone, timestamp, transaction_id, amount, clave
             )
@@ -123,7 +123,7 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
             timestamp = payload.get("timestamp", "")
             transaction_id = payload.get("transaction_id", "")
             amount = payload.get("amount", 0)
-            
+
             expected_hmac = generate_hmac_for_account_transfer(
                 account, timestamp, transaction_id, amount, clave
             )
@@ -136,7 +136,11 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
                     sender["phone"],
                     payload["timestamp"],
                     payload["transaction_id"],
-                    payload["amount"]["value"] if isinstance(payload["amount"], dict) else payload["amount"],
+                    (
+                        payload["amount"]["value"]
+                        if isinstance(payload["amount"], dict)
+                        else payload["amount"]
+                    ),
                     clave,
                 )
             elif sender.get("account_number"):
@@ -145,7 +149,11 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
                     sender["account_number"],
                     payload["timestamp"],
                     payload["transaction_id"],
-                    payload["amount"]["value"] if isinstance(payload["amount"], dict) else payload["amount"],
+                    (
+                        payload["amount"]["value"]
+                        if isinstance(payload["amount"], dict)
+                        else payload["amount"]
+                    ),
                     clave,
                 )
             else:
@@ -153,7 +161,7 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
 
         # Use constant-time comparison to prevent timing attacks
         return hmac.compare_digest(expected_hmac.lower(), provided_hmac.lower())
-        
+
     except Exception:
         return False
 
@@ -170,12 +178,12 @@ def extract_bank_code_from_iban(iban: str) -> str:
     """
     if not iban:
         return ""
-    
+
     # Remove dashes and ensure we have enough characters
     clean_iban = iban.replace("-", "")
     if len(clean_iban) < 8:
         return ""
-    
+
     # Bank code is at positions 4-7 in Costa Rican IBAN
     return clean_iban[4:8]
 

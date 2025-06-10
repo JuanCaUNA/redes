@@ -29,9 +29,7 @@ class AccountBalanceService:
 
     @staticmethod
     def update_balance_atomic(
-        account_number: str, 
-        amount: Decimal, 
-        transaction_type: str = "adjustment"
+        account_number: str, amount: Decimal, transaction_type: str = "adjustment"
     ) -> Dict:
         """
         Update account balance atomically with validation
@@ -52,10 +50,10 @@ class AccountBalanceService:
             # Check for sufficient funds on debits
             if amount < 0 and account.balance + amount < 0:
                 return {
-                    "success": False, 
+                    "success": False,
                     "error": "Fondos insuficientes",
                     "current_balance": float(account.balance),
-                    "requested_amount": float(amount)
+                    "requested_amount": float(amount),
                 }
 
             # Update balance
@@ -74,7 +72,7 @@ class AccountBalanceService:
                 "success": True,
                 "previous_balance": float(previous_balance),
                 "new_balance": float(account.balance),
-                "change": float(amount)
+                "change": float(amount),
             }
 
         except Exception as e:
@@ -88,7 +86,7 @@ class AccountBalanceService:
         to_account: str,
         amount: Decimal,
         description: str = "",
-        transaction_id: str = None
+        transaction_id: str = None,
     ) -> Dict:
         """
         Transfer money between two accounts atomically
@@ -122,7 +120,7 @@ class AccountBalanceService:
                     "success": False,
                     "error": "Fondos insuficientes",
                     "available": float(source_acc.balance),
-                    "requested": float(amount)
+                    "requested": float(amount),
                 }
 
             # Perform atomic transfer
@@ -138,7 +136,7 @@ class AccountBalanceService:
                     amount=amount,
                     description=description,
                     status="completed",
-                    transaction_type="internal_transfer"
+                    transaction_type="internal_transfer",
                 )
                 db.session.add(transaction)
 
@@ -156,7 +154,7 @@ class AccountBalanceService:
                 "to_account": to_account,
                 "amount": float(amount),
                 "source_new_balance": float(source_acc.balance),
-                "dest_new_balance": float(dest_acc.balance)
+                "dest_new_balance": float(dest_acc.balance),
             }
 
         except Exception as e:
@@ -166,9 +164,7 @@ class AccountBalanceService:
 
     @staticmethod
     def get_transaction_history(
-        account_number: str, 
-        limit: int = 50,
-        transaction_type: str = None
+        account_number: str, limit: int = 50, transaction_type: str = None
     ) -> List[Dict]:
         """
         Get transaction history for an account
@@ -192,10 +188,12 @@ class AccountBalanceService:
 
             if transaction_type:
                 query_sent = query_sent.filter_by(transaction_type=transaction_type)
-                query_received = query_received.filter_by(transaction_type=transaction_type)
+                query_received = query_received.filter_by(
+                    transaction_type=transaction_type
+                )
 
-            sent_transactions = query_sent.limit(limit//2).all()
-            received_transactions = query_received.limit(limit//2).all()
+            sent_transactions = query_sent.limit(limit // 2).all()
+            received_transactions = query_received.limit(limit // 2).all()
 
             all_transactions = sent_transactions + received_transactions
             all_transactions.sort(key=lambda x: x.created_at, reverse=True)
@@ -203,7 +201,9 @@ class AccountBalanceService:
             return [tx.to_dict() for tx in all_transactions[:limit]]
 
         except Exception as e:
-            logger.error(f"Error getting transaction history for {account_number}: {str(e)}")
+            logger.error(
+                f"Error getting transaction history for {account_number}: {str(e)}"
+            )
             return []
 
     @staticmethod
@@ -224,16 +224,14 @@ class AccountBalanceService:
 
             # Calculate balance from transactions
             sent_transactions = Transaction.query.filter_by(
-                from_account_id=account.id, 
-                status="completed"
-            ).all()
-            
-            received_transactions = Transaction.query.filter_by(
-                to_account_id=account.id, 
-                status="completed"
+                from_account_id=account.id, status="completed"
             ).all()
 
-            calculated_balance = Decimal('0.00')
+            received_transactions = Transaction.query.filter_by(
+                to_account_id=account.id, status="completed"
+            ).all()
+
+            calculated_balance = Decimal("0.00")
 
             # Subtract sent amounts
             for tx in sent_transactions:
@@ -244,14 +242,17 @@ class AccountBalanceService:
                 calculated_balance += tx.amount
 
             # Compare with stored balance
-            balance_matches = abs(account.balance - calculated_balance) < Decimal('0.01')
+            balance_matches = abs(account.balance - calculated_balance) < Decimal(
+                "0.01"
+            )
 
             return {
                 "valid": balance_matches,
                 "stored_balance": float(account.balance),
                 "calculated_balance": float(calculated_balance),
                 "difference": float(account.balance - calculated_balance),
-                "total_transactions": len(sent_transactions) + len(received_transactions)
+                "total_transactions": len(sent_transactions)
+                + len(received_transactions),
             }
 
         except Exception as e:

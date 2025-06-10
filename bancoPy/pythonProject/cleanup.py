@@ -13,30 +13,26 @@ def cleanup_project():
     """Clean up unnecessary files and directories"""
     print("🧹 SINPE Banking System - Project Cleanup")
     print("=" * 50)
-    
+
     # Files to remove (if they exist)
     files_to_remove = [
         "main_backup.py",
-        "ssl_config_backup.py", 
+        "ssl_config_backup.py",
         "ssl_config_fixed.py",
         "hmac_generator_backup.py",
         "pyproject.tom",  # Typo in filename
         "integration_summary.py",
         "fix_dependencies.py",
         "setup_dependencies.py",
-        "notas-proyecto.txt"
+        "notas-proyecto.txt",
     ]
-    
+
     # Directories to clean (cache files)
-    dirs_to_clean = [
-        "__pycache__",
-        ".pytest_cache",
-        ".ruff_cache"
-    ]
-    
+    dirs_to_clean = ["__pycache__", ".pytest_cache", ".ruff_cache"]
+
     removed_files = 0
     cleaned_dirs = 0
-    
+
     # Remove unnecessary files
     for file_name in files_to_remove:
         file_path = Path(file_name)
@@ -47,7 +43,7 @@ def cleanup_project():
                 removed_files += 1
             except Exception as e:
                 print(f"⚠️ Could not remove {file_name}: {e}")
-    
+
     # Clean cache directories recursively
     for root, dirs, files in os.walk("."):
         for dir_name in dirs:
@@ -59,14 +55,14 @@ def cleanup_project():
                     cleaned_dirs += 1
                 except Exception as e:
                     print(f"⚠️ Could not clean {dir_path}: {e}")
-    
+
     # Remove backup SSL config files in utils
     utils_backups = [
         "app/utils/ssl_config_backup.py",
-        "app/utils/ssl_config_fixed.py", 
-        "app/utils/hmac_generator_backup.py"
+        "app/utils/ssl_config_fixed.py",
+        "app/utils/hmac_generator_backup.py",
     ]
-    
+
     for backup_file in utils_backups:
         backup_path = Path(backup_file)
         if backup_path.exists():
@@ -76,13 +72,13 @@ def cleanup_project():
                 removed_files += 1
             except Exception as e:
                 print(f"⚠️ Could not remove {backup_file}: {e}")
-    
+
     print("\n" + "=" * 50)
     print(f"✅ Cleanup completed:")
     print(f"   📄 Files removed: {removed_files}")
     print(f"   📁 Cache directories cleaned: {cleaned_dirs}")
     print("\n🎯 Project is now optimized and clean!")
-    
+
     return removed_files + cleaned_dirs > 0
 
 

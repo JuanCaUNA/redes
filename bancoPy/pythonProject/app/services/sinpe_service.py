@@ -89,10 +89,10 @@ class SinpeService:
             # Input validation
             if amount <= 0:
                 raise Exception("El monto debe ser mayor a cero.")
-            
+
             if not SinpeService.validate_phone_number(sender_phone):
                 raise Exception("Número de teléfono remitente inválido.")
-                
+
             if not SinpeService.validate_phone_number(receiver_phone):
                 raise Exception("Número de teléfono receptor inválido.")
 
@@ -102,9 +102,9 @@ class SinpeService:
                 "transaction_type": "sinpe_movil",
                 "sender_phone": sender_phone,
                 "receiver_phone": receiver_phone,
-                "currency": currency
+                "currency": currency,
             }
-            
+
             # Get sender account info for monitoring
             sender_link = PhoneLink.query.filter_by(phone=sender_phone).first()
             if sender_link:
@@ -116,7 +116,7 @@ class SinpeService:
 
             # Monitor transaction for fraud
             monitoring_result = transaction_monitor.monitor_transaction(monitoring_data)
-            
+
             if not monitoring_result.get("allow_transaction", True):
                 raise Exception(
                     f"Transacción bloqueada por seguridad. "
@@ -134,7 +134,9 @@ class SinpeService:
                 sinpe_number=receiver_phone
             ).first()
             if not subscription:
-                raise Exception("El número de destino no está registrado en SINPE Móvil.")
+                raise Exception(
+                    "El número de destino no está registrado en SINPE Móvil."
+                )
 
             # 2. Get receiver account
             receiver_link = PhoneLink.query.filter_by(phone=receiver_phone).first()
@@ -189,11 +191,13 @@ class SinpeService:
                 sender_phone=sender_phone,
                 receiver_phone=receiver_phone,
                 status="completed",
-                transaction_type="sinpe_movil" if not from_account_id else "internal_sinpe_movil",
+                transaction_type=(
+                    "sinpe_movil" if not from_account_id else "internal_sinpe_movil"
+                ),
             )
 
             db.session.add(transaction)
-            
+
             # Commit all changes atomically
             db.session.commit()
 
@@ -251,7 +255,8 @@ class SinpeService:
         db.session.add(transaction)
         db.session.commit()
 
-        return transaction    @staticmethod
+        return transaction @ staticmethod
+
     def validate_phone_number(phone: str) -> bool:
         """
         Enhanced phone number validation for Costa Rican numbers
@@ -264,19 +269,19 @@ class SinpeService:
         """
         if not phone:
             return False
-            
+
         # Remove any non-digit characters
         clean_phone = "".join(filter(str.isdigit, phone))
 
         # Costa Rican phone numbers are typically 8 digits
         if len(clean_phone) != 8:
             return False
-            
+
         # Check if it starts with valid prefixes for Costa Rica
         # Mobile numbers typically start with 6, 7, 8
         # Landline numbers start with 2
-        valid_prefixes = ['2', '6', '7', '8']
-        
+        valid_prefixes = ["2", "6", "7", "8"]
+
         return clean_phone[0] in valid_prefixes
 
     @staticmethod
@@ -305,7 +310,8 @@ class SinpeService:
             account_info["phone_link"] = phone_link.to_dict() if phone_link else None
             accounts_info.append(account_info)
 
-        return accounts_info    @staticmethod
+        return accounts_info @ staticmethod
+
     def process_incoming_sinpe_transfer(
         sender_account: str,
         sender_bank: str,
@@ -342,7 +348,7 @@ class SinpeService:
             # Input validation
             if amount <= 0:
                 return {"success": False, "error": "Monto inválido"}
-            
+
             if not transaction_id:
                 return {"success": False, "error": "ID de transacción requerido"}
 
@@ -352,9 +358,9 @@ class SinpeService:
             ).first()
             if existing_transaction:
                 return {
-                    "success": False, 
+                    "success": False,
                     "error": "Transacción duplicada",
-                    "transaction_id": transaction_id
+                    "transaction_id": transaction_id,
                 }
 
             # Find receiver account by IBAN or account number
@@ -406,7 +412,7 @@ class SinpeService:
                 "transaction_id": transaction_id,
                 "receiver_account": receiver_acc.number,
                 "amount": float(transfer_amount),
-                "new_balance": float(receiver_acc.balance)
+                "new_balance": float(receiver_acc.balance),
             }
 
         except Exception as e:
@@ -414,7 +420,8 @@ class SinpeService:
             return {
                 "success": False,
                 "error": f"Error procesando transferencia: {str(e)}",
-            }    @staticmethod
+            } @ staticmethod
+
     def process_incoming_sinpe_movil_transfer(
         sender_phone: str,
         receiver_phone: str,
@@ -443,10 +450,13 @@ class SinpeService:
             # Input validation
             if amount <= 0:
                 return {"success": False, "error": "Monto inválido"}
-            
+
             if not SinpeService.validate_phone_number(receiver_phone):
-                return {"success": False, "error": "Número de teléfono receptor inválido"}
-                
+                return {
+                    "success": False,
+                    "error": "Número de teléfono receptor inválido",
+                }
+
             if not transaction_id:
                 return {"success": False, "error": "ID de transacción requerido"}
 
@@ -456,9 +466,9 @@ class SinpeService:
             ).first()
             if existing_transaction:
                 return {
-                    "success": False, 
+                    "success": False,
                     "error": "Transacción duplicada",
-                    "transaction_id": transaction_id
+                    "transaction_id": transaction_id,
                 }
 
             # Find receiver by phone link
@@ -504,7 +514,7 @@ class SinpeService:
                 "receiver_phone": receiver_phone,
                 "receiver_account": receiver_acc.number,
                 "amount": float(transfer_amount),
-                "new_balance": float(receiver_acc.balance)
+                "new_balance": float(receiver_acc.balance),
             }
 
         except Exception as e:

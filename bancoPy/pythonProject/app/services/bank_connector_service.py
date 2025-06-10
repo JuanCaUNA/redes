@@ -22,7 +22,7 @@ class BankConnectorService:
         )
         self.contacts = self._load_bank_contacts()
         self.iban_structure = self._load_iban_structure()
-        
+
         # SSL Configuration for inter-bank communication
         self.ssl_verify = ssl_config.get_requests_ssl_config()
         self.use_https = True  # Force HTTPS for inter-bank communications
@@ -124,7 +124,10 @@ class BankConnectorService:
         bank_ip = self.get_bank_ip_by_iban(target_iban)
 
         if not bank_ip:
-            return {"success": False, "error": "No se encontró IP del banco destino"}        # Validate required fields in transfer data
+            return {
+                "success": False,
+                "error": "No se encontró IP del banco destino",
+            }  # Validate required fields in transfer data
         required_fields = ["transaction_id", "amount", "timestamp"]
         for field in required_fields:
             if field not in transfer_data:
@@ -146,7 +149,7 @@ class BankConnectorService:
                         timeout=30,
                         headers={
                             "Content-Type": "application/json",
-                            "User-Agent": "SINPE-Banking-System/1.0"
+                            "User-Agent": "SINPE-Banking-System/1.0",
                         },
                         verify=self.ssl_verify,  # SSL certificate verification
                     )
@@ -166,11 +169,17 @@ class BankConnectorService:
                 except requests.exceptions.Timeout:
                     if attempt < max_retries - 1:
                         continue
-                    return {"success": False, "error": "Timeout al conectar con banco destino"}
+                    return {
+                        "success": False,
+                        "error": "Timeout al conectar con banco destino",
+                    }
                 except requests.exceptions.ConnectionError:
                     if attempt < max_retries - 1:
                         continue
-                    return {"success": False, "error": "No se pudo conectar con banco destino"}
+                    return {
+                        "success": False,
+                        "error": "No se pudo conectar con banco destino",
+                    }
 
             return {"success": False, "error": "Máximo número de reintentos alcanzado"}
 
@@ -189,7 +198,7 @@ class BankConnectorService:
 
         Returns:
             Response from target bank
-        """        # First, we need to find which bank handles this phone number
+        """  # First, we need to find which bank handles this phone number
         # This would typically involve querying the BCCR registry
         # For now, we'll try all available banks
 
@@ -207,7 +216,7 @@ class BankConnectorService:
                     timeout=10,
                     headers={
                         "Content-Type": "application/json",
-                        "User-Agent": "SINPE-Banking-System/1.0"
+                        "User-Agent": "SINPE-Banking-System/1.0",
                     },
                     verify=self.ssl_verify,  # SSL certificate verification
                 )

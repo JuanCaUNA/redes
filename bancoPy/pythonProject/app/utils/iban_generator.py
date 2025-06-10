@@ -81,7 +81,7 @@ def generate_account_number_cr_format() -> str:
 def generate_account_number() -> str:
     """
     Generate a simple account number for the banking system
-    
+
     Returns:
         Account number string
     """
@@ -112,15 +112,17 @@ def validate_iban_format(iban: str) -> bool:
     return True
 
 
-def generate_costa_rican_iban(bank_code: str = "152", account_number: str = None) -> str:
+def generate_costa_rican_iban(
+    bank_code: str = "152", account_number: str = None
+) -> str:
     """
     Generate a Costa Rican IBAN using the generate_iban function
     This is an alias for compatibility with the test suite
-    
+
     Args:
         bank_code: Bank code (3 digits)
         account_number: Account number (optional, ignored for compatibility)
-        
+
     Returns:
         Generated IBAN string
     """
