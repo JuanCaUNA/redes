@@ -1,0 +1,33 @@
+sinpe_system/
+├── server/
+│   ├── __init__.py
+│   ├── app.py
+│   ├── config.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── account.py
+│   │   └── transaction.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth_service.py
+│   │   └── transfer_service.py
+│   └── utils/
+│       ├── __init__.py
+│       ├── logger.py
+│       └── validators.py
+├── client/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── config.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   └── transfer.py
+│   └── utils/
+│       ├── __init__.py
+│       └── api_client.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_server.py
+│   └── test_client.py
+├── requirements.txt
+└── README.md 
