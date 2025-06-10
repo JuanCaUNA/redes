@@ -31,7 +31,7 @@ def generate_hmac_for_account_transfer(
         HMAC in hexadecimal format
     """
     amount_str = "{:.2f}".format(float(amount))
-    # CAMBIO CRÍTICO: Usar formato con comas como esperan otros bancos
+    # FORMATO CORREGIDO: Con comas como separadores para compatibilidad inter-banco
     mensaje = f"{clave},{account_number},{timestamp},{transaction_id},{amount_str}"
     return hashlib.md5(mensaje.encode()).hexdigest()
 
@@ -44,11 +44,11 @@ def generate_hmac_for_phone_transfer(
     clave: str = SECRET_KEY,
 ) -> str:
     """
-    Generate HMAC MD5 for SINPE mobile transfers (phone-based)
+    Generate HMAC MD5 for phone-to-phone transfers (SINPE Móvil)
     FORMATO CORREGIDO: Con comas como separadores para compatibilidad inter-banco
 
     Args:
-        phone_number: Phone number of recipient
+        phone_number: Phone number of sender (8 digits)
         timestamp: ISO 8601 timestamp
         transaction_id: UUID of transaction
         amount: Transfer amount
@@ -58,7 +58,7 @@ def generate_hmac_for_phone_transfer(
         HMAC in hexadecimal format
     """
     amount_str = "{:.2f}".format(float(amount))
-    # CAMBIO CRÍTICO: Usar formato con comas como esperan otros bancos
+    # FORMATO CORREGIDO: Con comas como separadores para compatibilidad inter-banco
     mensaje = f"{clave},{phone_number},{timestamp},{transaction_id},{amount_str}"
     return hashlib.md5(mensaje.encode()).hexdigest()
 
@@ -126,7 +126,8 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
             
             expected_hmac = generate_hmac_for_account_transfer(
                 account, timestamp, transaction_id, amount, clave
-            )        else:
+            )
+        else:
             # Try legacy format
             sender = payload.get("sender", {})
             if sender.get("phone"):
