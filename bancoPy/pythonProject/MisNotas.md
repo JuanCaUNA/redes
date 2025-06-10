@@ -2,84 +2,57 @@
 
 - este proyecto es para comunicacion entre bancos a un nivel basico
 - el codigo no requiere complejidad
-- se requiere el ssl
-- se requiere hmac
-- configurado en .venv de pyhon 3.12.4 en este proyecto
+- se requiere el ssl ✅ (FUNCIONANDO - certificados en app/ssl/)
+- se requiere hmac ✅ (FUNCIONANDO - todas las pruebas pasan)
+- configurado en .venv de python 3.12.4 en este proyecto ✅ (FUNCIONANDO)
 - en windows tengo tanto python 3.13 como el 3.12 pero solo usamos el del .venv que es el 3.12
 
-***importante actualmente no se esta conectado con otros bancos por lo que no se puede probar la comunicacion entre bancos***
+***IMPORTANTE: actualmente no se esta conectado con otros bancos por lo que no se puede probar la comunicacion entre bancos, pero todas las funciones internas funcionan correctamente***
 
-## Comandos útiles para Python
+## Estado Actual del Sistema ✅
 
-- Ejecutar un script Python:
+- **Servidor API**: Funciona en <https://127.0.0.1:5443> (SSL habilitado)
+- **Base de datos**: SQLite funcionando con datos de ejemplo
+- **Interfaz terminal**: Totalmente funcional con Rich UI
+- **Pruebas**: 4/4 tests pasando (HMAC y validaciones)
+- **SSL**: Certificados funcionando correctamente
+- **Funciones internas**: Todas operativas (usuarios, cuentas, transferencias internas)
 
-    ```bash
-    python archivo.py
+## Comandos útiles para este proyecto
+
+### Ejecutar el sistema principal
+
+- **Comando principal (recomendado)**:
+
+    ```powershell
+    .\.venv\Scripts\python.exe main.py
     ```
 
-- Instalar paquetes con pip:
+- **Activar entorno virtual (si es necesario)**:
 
-    ```bash
-    pip install nombre_paquete
+    ```powershell
+    .\.venv\Scripts\Activate.ps1
+    python main.py
     ```
 
-- Crear un entorno virtual:
+### Comandos de desarrollo
 
-    ```bash
-    python -m venv venv
+### Comandos de desarrollo
+
+- **Ejecutar pruebas**:
+
+    ```powershell
+    .\.venv\Scripts\python.exe -m pytest tests/ -v
     ```
 
-- Activar entorno virtual:
-  - En Windows:
+- **Instalar dependencias**:
 
-    ```bash
-    .\venv\Scripts\activate
+    ```powershell
+    .\.venv\Scripts\python.exe -m pip install -r requirements.txt
     ```
 
-  - En macOS/Linux:
+## URLs importantes
 
-    ```bash
-    source venv/bin/activate
-    ```
-
-## Comandos útiles para Ruff y Black
-
-### Ruff
-
-- Analizar código con Ruff:
-
-    ```bash
-    ruff .
-    ```
-
-- Corregir automáticamente problemas:
-
-    ```bash
-    ruff check . --fix
-    ```
-
-- Mostrar ayuda de Ruff:
-
-    ```bash
-    ruff --help
-    ```
-
-### Black
-
-- Formatear todo el proyecto con Black:
-
-    ```bash
-    black .
-    ```
-
-- Formatear un archivo específico:
-
-    ```bash
-    black archivo.py
-    ```
-
-- Mostrar ayuda de Black:
-
-    ```bash
-    black --help
-    ```
+- **API Server (SSL)**: <https://127.0.0.1:5443>
+- **API Health Check**: <https://127.0.0.1:5443/health>
+- **API Monitoring**: <https://127.0.0.1:5443/api/monitoring/health>
