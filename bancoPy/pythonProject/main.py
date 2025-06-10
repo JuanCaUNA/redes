@@ -45,7 +45,9 @@ class SinpeBankingSystem:
             db_service = DatabaseService()
             db_service.create_sample_data()
 
-        console.print("[green]✓ Database initialized successfully[/green]")    def start_api_server(self):
+        console.print("[green]✓ Database initialized successfully[/green]")
+
+    def start_api_server(self):
         """Start Flask API server in background thread"""
 
         def run_server():
