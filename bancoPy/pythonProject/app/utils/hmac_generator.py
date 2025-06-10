@@ -126,14 +126,13 @@ def verify_hmac(payload: dict, provided_hmac: str, clave: str = SECRET_KEY) -> b
             
             expected_hmac = generate_hmac_for_account_transfer(
                 account, timestamp, transaction_id, amount, clave
-            )
-        else:
+            )        else:
             # Try legacy format
             sender = payload.get("sender", {})
-            if sender.get("phone_number"):
+            if sender.get("phone"):
                 # Phone-based transfer (SINPE Móvil)
                 expected_hmac = generate_hmac_for_phone_transfer(
-                    sender["phone_number"],
+                    sender["phone"],
                     payload["timestamp"],
                     payload["transaction_id"],
                     payload["amount"]["value"] if isinstance(payload["amount"], dict) else payload["amount"],

@@ -3,6 +3,12 @@ Test HMAC generation and verification
 """
 
 import unittest
+import sys
+import os
+
+# Add app directory to path
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "app"))
+
 from app.utils.hmac_generator import (
     generate_hmac_for_account_transfer,
     generate_hmac_for_phone_transfer,
