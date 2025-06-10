@@ -35,20 +35,22 @@ def create_app():
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
         supports_credentials=True,
-    )
-
-    # Register blueprints
+    )    # Register blueprints
     from app.routes.sinpe_routes import sinpe_bp
     from app.routes.user_routes import user_bp
     from app.routes.account_routes import account_bp
     from app.routes.transaction_routes import transaction_bp
     from app.routes.phone_link_routes import phone_link_bp
     from app.routes.auth_routes import auth_bp
+    from app.routes.monitoring_routes import monitoring_bp
 
     app.register_blueprint(sinpe_bp, url_prefix="/api")
     app.register_blueprint(user_bp, url_prefix="/api")
     app.register_blueprint(account_bp, url_prefix="/api")
     app.register_blueprint(transaction_bp, url_prefix="/api")
+    app.register_blueprint(phone_link_bp, url_prefix="/api")
+    app.register_blueprint(auth_bp, url_prefix="/api")
+    app.register_blueprint(monitoring_bp, url_prefix="/api/monitoring")
     app.register_blueprint(phone_link_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api")
 

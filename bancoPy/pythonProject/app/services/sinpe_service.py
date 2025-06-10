@@ -59,7 +59,9 @@ class SinpeService:
         Returns:
             SinpeSubscription object or None
         """
-        return SinpeSubscription.query.filter_by(sinpe_number=phone).first()    @staticmethod
+        return SinpeSubscription.query.filter_by(sinpe_number=phone).first()
+
+    @staticmethod
     def send_sinpe_transfer(
         sender_phone: str,
         receiver_phone: str,
@@ -82,7 +84,8 @@ class SinpeService:
 
         Raises:
             Exception: If transfer cannot be processed
-        """        try:
+        """
+        try:
             # Input validation
             if amount <= 0:
                 raise Exception("El monto debe ser mayor a cero.")

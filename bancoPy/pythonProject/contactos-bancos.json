@@ -9,7 +9,7 @@
   {
     "banco": "Banco Nacional",
     "codigo": "151",
-    "contacto": "BNCR Sistema SINPE", 
+    "contacto": "BNCR Sistema SINPE",
     "IBAN": "CR21-0151-0001-XX-XXXX-XXXX-XX",
     "IP": "127.0.0.1:5002"
   },
@@ -17,7 +17,7 @@
     "banco": "Banco Popular",
     "codigo": "138",
     "contacto": "BPDC Sistema SINPE",
-    "IBAN": "CR21-0138-0001-XX-XXXX-XXXX-XX", 
+    "IBAN": "CR21-0138-0001-XX-XXXX-XXXX-XX",
     "IP": "127.0.0.1:5003"
   },
   {
