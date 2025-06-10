@@ -1,0 +1,7 @@
+# notas de proyecto
+
+- usa un en el proyecto .venv en windows
+- la comunicion entre bancos es estandarizado (unico)
+- no es un programa de alta complegidad. se espera un codigo simple pero funcional
+- se requiere el uso de ssl
+- el hmac tambien es requerido (no modificar)

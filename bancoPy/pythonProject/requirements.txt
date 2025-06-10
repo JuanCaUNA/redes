@@ -8,7 +8,8 @@ python-dotenv==1.0.0
 click==8.1.7
 Werkzeug==2.3.7
 psutil==5.9.6
-cryptography==41.0.7
+cryptography>=41.0.7
+certifi>=2023.7.22
 PyJWT==2.8.0
 # GUI dependencies (tkinter comes with Python by default)
 

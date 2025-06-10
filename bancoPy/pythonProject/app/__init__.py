@@ -21,21 +21,30 @@ def create_app():
 
     # Configuration with absolute path
     db_path = os.path.join(db_dir, "banking.db")
-    app.config["SECRET_KEY"] = "supersecreta123"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{db_path}"
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config.update({
+        "SECRET_KEY": "supersecreta123",
+        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{db_path}",
+        "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+        "SQLALCHEMY_ENGINE_OPTIONS": {
+            "pool_pre_ping": True,
+            "pool_recycle": 300,
+        },
+        "JSON_SORT_KEYS": False,
+        "JSONIFY_PRETTYPRINT_REGULAR": False,
+    })
 
     # Initialize extensions
     db.init_app(app)
 
-    # Configure CORS
+    # Configure CORS with optimized settings
     CORS(
         app,
-        origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+        origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://127.0.0.1:5443"],
         methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Authorization"],
         supports_credentials=True,
-    )    # Register blueprints
+        max_age=3600,  # Cache preflight requests for 1 hour
+    )# Register blueprints
     from app.routes.sinpe_routes import sinpe_bp
     from app.routes.user_routes import user_bp
     from app.routes.account_routes import account_bp

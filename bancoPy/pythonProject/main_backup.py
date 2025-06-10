@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SINPE Banking System - Main Entry Point (Optimized)
+SINPE Banking System - Main Entry Point
 Terminal-based banking application with Flask API backend
 """
 
@@ -13,6 +13,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt, Confirm
 from rich.text import Text
+from rich.layout import Layout
+from rich.live import Live
 from rich import box
 
 # Add app directory to path
@@ -27,16 +29,12 @@ console = Console()
 
 
 class SinpeBankingSystem:
-    """Optimized SINPE Banking System with SSL support"""
-    
     def __init__(self):
         self.app = create_app()
         self.terminal_service = TerminalService()
         self.current_user = None
         self.server_thread = None
-        self.server_running = False
-
-    def initialize_database(self):
+        self.server_running = False    def initialize_database(self):
         """Initialize database with sample data"""
         console.print("[yellow]Initializing database...[/yellow]")
 
@@ -48,7 +46,7 @@ class SinpeBankingSystem:
         console.print("[green]✓ Database initialized successfully[/green]")
 
     def start_api_server(self):
-        """Start Flask API server with SSL support"""
+        """Start Flask API server in background thread"""
         console.print("[yellow]Starting API server...[/yellow]")
 
         def run_server():
@@ -57,6 +55,7 @@ class SinpeBankingSystem:
             if ssl_context:
                 console.print("🔐 [green]SSL certificates loaded successfully[/green]")
                 port = 5443  # Standard HTTPS port for development
+                url = f"https://127.0.0.1:{port}"
                 self.app.run(
                     host="127.0.0.1", 
                     port=port, 
@@ -68,6 +67,7 @@ class SinpeBankingSystem:
             else:
                 console.print("⚠️ [yellow]SSL certificates not available - using HTTP[/yellow]")
                 port = 5000
+                url = f"http://127.0.0.1:{port}"
                 self.app.run(
                     host="127.0.0.1", 
                     port=port, 
@@ -79,8 +79,7 @@ class SinpeBankingSystem:
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
         self.server_running = True
-        
-        # Wait for server to start
+          # Wait for server to start
         time.sleep(1)
         ssl_context = getattr(self.app, 'ssl_context', None)
         port = 5443 if ssl_context else 5000
@@ -88,7 +87,7 @@ class SinpeBankingSystem:
         console.print(f"✓ [green]API server started on {protocol}://127.0.0.1:{port}[/green]")
 
     def show_welcome_screen(self):
-        """Display welcome screen with SSL status"""
+        """Display welcome screen"""
         console.clear()
 
         welcome_text = Text()
@@ -121,50 +120,84 @@ class SinpeBankingSystem:
 
         table.add_row("1", "🔐 Login / User Management")
         table.add_row("2", "💰 Account Management")
-        table.add_row("3", "💸 SINPE Transfers")
-        table.add_row("4", "📱 Phone Link Management")
-        table.add_row("5", "📊 Transaction History")
-        table.add_row("6", "⚙️ Admin Panel")
-        table.add_row("0", "🚪 Exit")
+        table.add_row("3", "📱 SINPE Transfer")
+        table.add_row("4", "📊 Transaction History")
+        table.add_row("5", "🔗 Phone Link Management")
+        table.add_row("6", "⚙️  Admin Panel")
+        table.add_row("7", "🌐 API Documentation")
+        table.add_row("0", "❌ Exit")
 
         console.print(table)
 
     def handle_menu_choice(self, choice):
-        """Handle menu choice selection"""
-        try:
-            if choice == "0":
-                return False
-            elif choice == "1":
-                self.terminal_service.handle_user_management()
-            elif choice == "2":
-                self.terminal_service.handle_account_management()
-            elif choice == "3":
-                self.terminal_service.handle_sinpe_transfers()
-            elif choice == "4":
-                self.terminal_service.handle_phone_links()
-            elif choice == "5":
-                self.terminal_service.handle_transaction_history()
-            elif choice == "6":
-                self.terminal_service.handle_admin_panel()
-            else:
-                console.print("[red]Invalid option. Please try again.[/red]")
-            
-            return True
-            
-        except Exception as e:
-            console.print(f"[red]Error: {e}[/red]")
-            return True
+        """Handle main menu selection"""
+        if choice == "1":
+            self.terminal_service.show_user_management()
+        elif choice == "2":
+            self.terminal_service.show_account_management()
+        elif choice == "3":
+            self.terminal_service.show_sinpe_transfer()
+        elif choice == "4":
+            self.terminal_service.show_transaction_history()
+        elif choice == "5":
+            self.terminal_service.show_phone_link_management()
+        elif choice == "6":
+            self.terminal_service.show_admin_panel()
+        elif choice == "7":
+            self.show_api_documentation()
+        elif choice == "0":
+            return False
+        else:
+            console.print("[red]Invalid option. Please try again.[/red]")
+
+        return True
+
+    def show_api_documentation(self):
+        """Show API endpoints documentation"""
+        console.clear()
+        console.print(Panel("🌐 API Documentation", style="bold blue"))
+
+        endpoints = [
+            ("POST", "/api/sinpe-movil", "Handle SINPE transfers"),
+            ("GET", "/api/validate/{phone}", "Validate phone number"),
+            ("GET", "/api/sinpe/user-link/{username}", "Check user SINPE link"),
+            ("GET", "/api/users", "List all users"),
+            ("POST", "/api/users", "Create new user"),
+            ("GET", "/api/accounts", "List all accounts"),
+            ("POST", "/api/accounts", "Create new account"),
+            ("GET", "/api/transactions", "List transactions"),
+            ("POST", "/api/phone-links", "Create phone link"),
+        ]
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Method", style="green", width=8)
+        table.add_column("Endpoint", style="cyan")
+        table.add_column("Description", style="white")
+
+        for method, endpoint, description in endpoints:
+            table.add_row(method, endpoint, description)
+
+        console.print(table)
+        console.print(f"\n[dim]Base URL: http://127.0.0.1:5000[/dim]")
+
+        Prompt.ask("\nPress Enter to continue")
 
     def run(self):
         """Main application loop"""
         try:
             # Initialize system
-            console.print("[cyan]Starting SINPE Banking System...[/cyan]")
-            self.initialize_database()
-            self.start_api_server()
-
-            # Show welcome screen
             self.show_welcome_screen()
+            console.print("[yellow]Starting SINPE Banking System...[/yellow]")
+
+            # Initialize database
+            self.initialize_database()
+
+            # Start API server
+            console.print("[yellow]Starting API server...[/yellow]")
+            self.start_api_server()
+            console.print(
+                "[green]✓ API server started on http://127.0.0.1:5000[/green]"
+            )
 
             # Main menu loop
             while True:
