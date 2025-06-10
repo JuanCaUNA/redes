@@ -48,35 +48,41 @@ class SinpeBankingSystem:
         console.print("[green]✓ Database initialized successfully[/green]")
 
     def start_api_server(self):
-        """Start Flask API server with SSL support"""
+        """Start Flask API server with SSL support and improved error handling"""
         console.print("[yellow]Starting API server...[/yellow]")
 
         def run_server():
-            ssl_context = getattr(self.app, "ssl_context", None)
+            try:
+                ssl_context = getattr(self.app, "ssl_context", None)
 
-            if ssl_context:
-                console.print("🔐 [green]SSL certificates loaded successfully[/green]")
-                port = 5443  # Standard HTTPS port for development
-                self.app.run(
-                    host="127.0.0.1",
-                    port=port,
-                    debug=False,
-                    use_reloader=False,
-                    ssl_context=ssl_context,
-                    threaded=True,
-                )
-            else:
-                console.print(
-                    "⚠️ [yellow]SSL certificates not available - using HTTP[/yellow]"
-                )
-                port = 5000
-                self.app.run(
-                    host="127.0.0.1",
-                    port=port,
-                    debug=False,
-                    use_reloader=False,
-                    threaded=True,
-                )
+                if ssl_context:
+                    console.print(
+                        "🔐 [green]SSL certificates loaded successfully[/green]"
+                    )
+                    port = 5443  # Standard HTTPS port for development
+                    self.app.run(
+                        host="127.0.0.1",
+                        port=port,
+                        debug=False,
+                        use_reloader=False,
+                        ssl_context=ssl_context,
+                        threaded=True,
+                    )
+                else:
+                    console.print(
+                        "⚠️ [yellow]SSL certificates not available - using HTTP[/yellow]"
+                    )
+                    port = 5000
+                    self.app.run(
+                        host="127.0.0.1",
+                        port=port,
+                        debug=False,
+                        use_reloader=False,
+                        threaded=True,
+                    )
+            except Exception as e:
+                console.print(f"[red]❌ Server error: {e}[/red]")
+                self.server_running = False
 
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()

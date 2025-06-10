@@ -17,9 +17,9 @@ def create_app():
 
     # Ensure database directory exists
     db_dir = os.path.join(project_root, "database")
-    os.makedirs(db_dir, exist_ok=True)
-
-    # Configuration with absolute path
+    os.makedirs(
+        db_dir, exist_ok=True
+    )  # Configuration with absolute path and optimizations
     db_path = os.path.join(db_dir, "banking.db")
     app.config.update(
         {
@@ -29,9 +29,19 @@ def create_app():
             "SQLALCHEMY_ENGINE_OPTIONS": {
                 "pool_pre_ping": True,
                 "pool_recycle": 300,
+                "pool_timeout": 20,
+                "pool_size": 10,
+                "max_overflow": 20,
             },
             "JSON_SORT_KEYS": False,
             "JSONIFY_PRETTYPRINT_REGULAR": False,
+            # Security headers
+            "SESSION_COOKIE_SECURE": True,
+            "SESSION_COOKIE_HTTPONLY": True,
+            "SESSION_COOKIE_SAMESITE": "Lax",
+            # Performance optimizations
+            "SEND_FILE_MAX_AGE_DEFAULT": 31536000,  # 1 year for static files
+            "MAX_CONTENT_LENGTH": 16 * 1024 * 1024,  # 16MB max upload
         }
     )
 
