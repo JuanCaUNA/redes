@@ -51,12 +51,14 @@ def create_app():
     app.register_blueprint(phone_link_bp, url_prefix="/api")
     app.register_blueprint(auth_bp, url_prefix="/api")
     app.register_blueprint(monitoring_bp, url_prefix="/api/monitoring")
-    app.register_blueprint(phone_link_bp, url_prefix="/api")
-    app.register_blueprint(auth_bp, url_prefix="/api")
 
     # Health check endpoint
     @app.route("/health")
     def health_check():
         return {"status": "healthy", "message": "SINPE Banking System API"}
+
+    # SSL Configuration
+    from app.utils.ssl_config import ssl_config
+    app.ssl_context = ssl_config.get_ssl_context()
 
     return app

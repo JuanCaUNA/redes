@@ -3,7 +3,15 @@ System Health Monitoring Service
 Monitors database connections, API health, inter-bank connectivity, and system performance
 """
 
-import psutil
+# Optional import for system monitoring
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    import logging
+    logging.warning("psutil not available - system monitoring features will be limited")
+
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -108,6 +116,16 @@ class SystemHealthMonitor:
     def _check_system_resources(self):
         """Check system CPU, memory, and disk usage"""
         try:
+            if not PSUTIL_AVAILABLE:
+                self.health_data["system"] = {
+                    "status": "limited",
+                    "message": "psutil not available - system monitoring disabled",
+                    "cpu_percent": 0,
+                    "memory_percent": 0,
+                    "disk_percent": 0
+                }
+                return
+
             # CPU usage
             cpu_percent = psutil.cpu_percent(interval=1)
             
@@ -286,16 +304,28 @@ class SystemHealthMonitor:
             # Get additional metrics
             detailed_report = self.health_data.copy()
             
-            # Add process information
-            process = psutil.Process()
-            detailed_report["process"] = {
-                "pid": process.pid,
-                "cpu_percent": process.cpu_percent(),
-                "memory_mb": round(process.memory_info().rss / 1024 / 1024, 2),
-                "open_files": len(process.open_files()),
-                "connections": len(process.connections()),
-                "threads": process.num_threads()
-            }
+            # Add process information (if psutil available)
+            if PSUTIL_AVAILABLE:
+                try:
+                    process = psutil.Process()
+                    detailed_report["process"] = {
+                        "pid": process.pid,
+                        "cpu_percent": process.cpu_percent(),
+                        "memory_mb": round(process.memory_info().rss / 1024 / 1024, 2),
+                        "open_files": len(process.open_files()),
+                        "connections": len(process.connections()),
+                        "threads": process.num_threads()
+                    }
+                except Exception as e:
+                    detailed_report["process"] = {
+                        "status": "error",
+                        "error": str(e)
+                    }
+            else:
+                detailed_report["process"] = {
+                    "status": "unavailable",
+                    "message": "psutil not available - process monitoring disabled"
+                }
 
             # Add database connection pool info (if using SQLAlchemy with connection pooling)
             try:

@@ -7,6 +7,7 @@ import os
 import requests
 from typing import Dict, Optional, List
 import logging
+from app.utils.ssl_config import ssl_config
 
 
 class BankConnectorService:
@@ -21,6 +22,10 @@ class BankConnectorService:
         )
         self.contacts = self._load_bank_contacts()
         self.iban_structure = self._load_iban_structure()
+        
+        # SSL Configuration for inter-bank communication
+        self.ssl_verify = ssl_config.get_requests_ssl_config()
+        self.use_https = True  # Force HTTPS for inter-bank communications
 
     def _load_bank_contacts(self) -> List[Dict]:
         """Load bank contacts from JSON file"""
@@ -119,28 +124,31 @@ class BankConnectorService:
         bank_ip = self.get_bank_ip_by_iban(target_iban)
 
         if not bank_ip:
-            return {"success": False, "error": "No se encontró IP del banco destino"}
-
-        # Validate required fields in transfer data
+            return {"success": False, "error": "No se encontró IP del banco destino"}        # Validate required fields in transfer data
         required_fields = ["transaction_id", "amount", "timestamp"]
         for field in required_fields:
             if field not in transfer_data:
                 return {"success": False, "error": f"Campo requerido faltante: {field}"}
 
         try:
-            # Construct full URL
-            url = f"http://{bank_ip}/api/sinpe-transfer"
+            # Construct full URL with HTTPS for secure inter-bank communication
+            protocol = "https" if self.use_https else "http"
+            url = f"{protocol}://{bank_ip}/api/sinpe-transfer"
 
             # Add retry logic for inter-bank communication
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    # Send POST request to target bank
+                    # Send POST request to target bank with SSL verification
                     response = requests.post(
                         url,
                         json=transfer_data,
                         timeout=30,
-                        headers={"Content-Type": "application/json"},
+                        headers={
+                            "Content-Type": "application/json",
+                            "User-Agent": "SINPE-Banking-System/1.0"
+                        },
+                        verify=self.ssl_verify,  # SSL certificate verification
                     )
 
                     if response.status_code == 200:
@@ -181,8 +189,7 @@ class BankConnectorService:
 
         Returns:
             Response from target bank
-        """
-        # First, we need to find which bank handles this phone number
+        """        # First, we need to find which bank handles this phone number
         # This would typically involve querying the BCCR registry
         # For now, we'll try all available banks
 
@@ -191,13 +198,18 @@ class BankConnectorService:
                 continue
 
             try:
-                url = f"http://{contact['IP']}/api/sinpe-movil-transfer"
+                protocol = "https" if self.use_https else "http"
+                url = f"{protocol}://{contact['IP']}/api/sinpe-movil-transfer"
 
                 response = requests.post(
                     url,
                     json=transfer_data,
                     timeout=10,
-                    headers={"Content-Type": "application/json"},
+                    headers={
+                        "Content-Type": "application/json",
+                        "User-Agent": "SINPE-Banking-System/1.0"
+                    },
+                    verify=self.ssl_verify,  # SSL certificate verification
                 )
 
                 if response.status_code == 200:

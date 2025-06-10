@@ -9,7 +9,13 @@ from app.services.logging_service import banking_logger
 from app.models import db, Transaction, Account, User
 from datetime import datetime, timedelta
 from sqlalchemy import func, and_
-import psutil
+
+# Optional import for system monitoring
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
 
 monitoring_bp = Blueprint("monitoring", __name__)
 

@@ -45,13 +45,24 @@ class SinpeBankingSystem:
             db_service = DatabaseService()
             db_service.create_sample_data()
 
-        console.print("[green]✓ Database initialized successfully[/green]")
-
-    def start_api_server(self):
+        console.print("[green]✓ Database initialized successfully[/green]")    def start_api_server(self):
         """Start Flask API server in background thread"""
 
         def run_server():
-            self.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
+            # Get SSL context if available
+            ssl_context = getattr(self.app, 'ssl_context', None)
+            if ssl_context:
+                console.print("🔐 [green]Starting API server with SSL support...[/green]")
+                self.app.run(
+                    host="127.0.0.1", 
+                    port=5000, 
+                    debug=False, 
+                    use_reloader=False,
+                    ssl_context=ssl_context
+                )
+            else:
+                console.print("⚠️ [yellow]Starting API server without SSL (certificates not available)[/yellow]")
+                self.app.run(host="127.0.0.1", port=5000, debug=False, use_reloader=False)
 
         self.server_thread = threading.Thread(target=run_server, daemon=True)
         self.server_thread.start()
