@@ -1,3 +1,6 @@
+# py code
+
+```py
 # este codigo es la estructura de un servicio web que recibe transferencias SINPE y SINPE Móvil
 # el codigo de como se genera el HMAC para validar la firma de las solicitudes
 # Debe ingresarse al codigo
@@ -55,3 +58,4 @@ def receive_sinpe_movil_transfer():
         },
         "description": data["description"]
     }
+```

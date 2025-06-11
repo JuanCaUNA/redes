@@ -1,30 +1,83 @@
 [
   {
-    "banco": "Banco de Costa Rica",
+    "banco": "Banco Python Principal",
     "codigo": "152",
-    "contacto": "BCR Sistema SINPE",
+    "contacto": "Banco Local",
     "IBAN": "CR21-0152-0001-XX-XXXX-XXXX-XX",
-    "IP": "127.0.0.1:5001"
+    "IP": "192.168.1.10:5000",
+    "enabled": true,
+    "description": "Banco principal del ecosistema Python"
   },
   {
-    "banco": "Banco Nacional",
-    "codigo": "151",
-    "contacto": "BNCR Sistema SINPE",
-    "IBAN": "CR21-0151-0001-XX-XXXX-XXXX-XX",
-    "IP": "127.0.0.1:5002"
+    "banco": "Banco Josue",
+    "codigo": "876",
+    "contacto": "josue",
+    "IBAN": "CR21-0876-0001-00-0000-0121-87",
+    "IP": "192.168.3.10:5000",
+    "enabled": true,
+    "description": "Banco Python secundario"
   },
   {
-    "banco": "Banco Popular",
-    "codigo": "138",
-    "contacto": "BPDC Sistema SINPE",
-    "IBAN": "CR21-0138-0001-XX-XXXX-XXXX-XX",
-    "IP": "127.0.0.1:5003"
+    "banco": "Banco TypeScript",
+    "codigo": "119",
+    "contacto": "marconi",
+    "IBAN": "CR21-0119-0001-71-3176-4383-40",
+    "IP": "192.168.2.10:3001",
+    "enabled": true,
+    "description": "Banco TypeScript con Prisma"
   },
   {
-    "banco": "BAC San José",
-    "codigo": "102",
-    "contacto": "BAC Sistema SINPE",
-    "IBAN": "CR21-0102-0001-XX-XXXX-XXXX-XX",
-    "IP": "127.0.0.1:5004"
+    "banco": "Banco Brayan",
+    "codigo": "241",
+    "contacto": "brayan",
+    "IBAN": "CR21-0241-0001-58-3139-8505-52",
+    "IP": "192.168.4.10:5050",
+    "enabled": true,
+    "description": "Banco remoto"
+  },
+  {
+    "banco": "Banco Kendall",
+    "codigo": "223",
+    "contacto": "kendall",
+    "IBAN": "CR21-0223-0001-53-8683-6961-36",
+    "IP": "192.168.5.10:3001",
+    "enabled": true,
+    "description": "Banco remoto secundario"
+  },
+  {
+    "banco": "Banco Marco",
+    "codigo": "150",
+    "contacto": "marco",
+    "IBAN": "CR21-0150-0001-00-0000-0012-34",
+    "IP": "192.168.6.10:5000",
+    "enabled": false,
+    "description": "Banco en desarrollo"
+  },
+  {
+    "banco": "Banco Chuma",
+    "codigo": "111",
+    "contacto": "chuma",
+    "IBAN": "CR21-0111-0001-57-1903-8653-86",
+    "IP": "192.168.7.10:5000",
+    "enabled": false,
+    "description": "Banco en desarrollo"
+  },
+  {
+    "banco": "Banco Greichel",
+    "codigo": "777",
+    "contacto": "greichel",
+    "IBAN": "CR21-0777-0001-21-8760-2498-71",
+    "IP": "192.168.8.10:5000",
+    "enabled": false,
+    "description": "Banco en desarrollo"
+  },
+  {
+    "banco": "Banco Jordan",
+    "codigo": "333",
+    "contacto": "jordan",
+    "IBAN": "CR21-0333-0001-00-0000-0012-34",
+    "IP": "192.168.9.10:5000",
+    "enabled": false,
+    "description": "Banco en desarrollo"
   }
 ]

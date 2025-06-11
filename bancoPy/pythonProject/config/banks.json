@@ -1,12 +1,18 @@
 {
   "152": {
     "name": "Banco Python Principal",
-    "url": "http://localhost:5000",
+    "url": "http://192.168.1.10:5000",
     "code": "0152",
-    "ssh_host": "localhost",
+    "ssh_host": "192.168.1.10",
     "ssh_port": 22,
     "enabled": true,
-    "description": "Banco local Python"
+    "description": "Banco local Python - Banco Principal del ecosistema",
+    "iban_prefix": "CR21-0152-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "876": {
     "name": "Banco Josue",
@@ -15,16 +21,28 @@
     "ssh_host": "192.168.3.10",
     "ssh_port": 22,
     "enabled": true,
-    "description": "Banco Python secundario"
+    "description": "Banco Python secundario - Red de Josue",
+    "iban_prefix": "CR21-0876-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "119": {
-    "name": "Banco TypeScript",
+    "name": "Banco TypeScript (Marconi)",
     "url": "http://192.168.2.10:3001",
     "code": "0119",
     "ssh_host": "192.168.2.10",
     "ssh_port": 22,
     "enabled": true,
-    "description": "Banco TypeScript con Prisma"
+    "description": "Banco TypeScript con Prisma - Red de Marconi",
+    "iban_prefix": "CR21-0119-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe/transfer",
+      "sinpe_movil": "/api/sinpe/movil-transfer",
+      "health": "/health"
+    }
   },
   "241": {
     "name": "Banco Brayan",
@@ -33,7 +51,13 @@
     "ssh_host": "192.168.4.10",
     "ssh_port": 22,
     "enabled": true,
-    "description": "Banco remoto"
+    "description": "Banco remoto - Red de Brayan",
+    "iban_prefix": "CR21-0241-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "223": {
     "name": "Banco Kendall",
@@ -42,8 +66,13 @@
     "ssh_host": "192.168.5.10",
     "ssh_port": 22,
     "enabled": true,
-    "description": "Banco remoto secundario"
-  },
+    "description": "Banco remoto secundario - Red de Kendall",
+    "iban_prefix": "CR21-0223-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }  },
   "150": {
     "name": "Banco Marco",
     "url": "http://192.168.6.10:5000",
@@ -51,7 +80,13 @@
     "ssh_host": "192.168.6.10",
     "ssh_port": 22,
     "enabled": false,
-    "description": "Banco en desarrollo"
+    "description": "Banco en desarrollo - Red de Marco",
+    "iban_prefix": "CR21-0150-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "111": {
     "name": "Banco Chuma",
@@ -60,7 +95,13 @@
     "ssh_host": "192.168.7.10",
     "ssh_port": 22,
     "enabled": false,
-    "description": "Banco en desarrollo"
+    "description": "Banco en desarrollo - Red de Chuma",
+    "iban_prefix": "CR21-0111-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "777": {
     "name": "Banco Greichel",
@@ -69,7 +110,13 @@
     "ssh_host": "192.168.8.10",
     "ssh_port": 22,
     "enabled": false,
-    "description": "Banco en desarrollo"
+    "description": "Banco en desarrollo - Red de Greichel",
+    "iban_prefix": "CR21-0777-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   },
   "333": {
     "name": "Banco Jordan",
@@ -78,6 +125,12 @@
     "ssh_host": "192.168.9.10",
     "ssh_port": 22,
     "enabled": false,
-    "description": "Banco en desarrollo"
+    "description": "Banco en desarrollo - Red de Jordan",
+    "iban_prefix": "CR21-0333-0001",
+    "api_endpoints": {
+      "sinpe_transfer": "/api/sinpe-transfer",
+      "sinpe_movil": "/api/sinpe-movil-transfer",
+      "health": "/health"
+    }
   }
 }

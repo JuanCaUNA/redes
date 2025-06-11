@@ -2,6 +2,14 @@
 
 Sistema bancario integral basado en Python que replica la funcionalidad del sistema de pagos SINPE de Costa Rica. El sistema presenta una interfaz de terminal rica e interactiva con backend API Flask.
 
+## 🆕 **CORRECCIONES INTER-BANCARIAS IMPLEMENTADAS**
+
+✅ **HMAC Compatible**: Algoritmo HMAC actualizado con formato de comas para compatibilidad total con otros bancos del ecosistema
+✅ **Configuración Unificada**: Archivos `banks.json` y `contactos-bancos.json` sincronizados con IPs y estructuras correctas
+✅ **Validación Robusta**: Validadores mejorados para payloads SINPE y SINPE Móvil según protocolos estándar
+✅ **SSL/HTTPS**: Comunicación segura certificada para transferencias inter-bancarias
+✅ **Test de Conectividad**: Script `test_connectivity.py` para probar conectividad con otros bancos
+
 ## ✨ Características
 
 - **🖥️ Interfaz Gráfica Moderna**: GUI simple con tkinter para fácil interacción (¡NUEVA!)
