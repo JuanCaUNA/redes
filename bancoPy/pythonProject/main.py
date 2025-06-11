@@ -149,17 +149,17 @@ class SinpeBankingSystem:
             if choice == "0":
                 return False
             elif choice == "1":
-                self.terminal_service.handle_user_management()
+                self.terminal_service.show_user_management()
             elif choice == "2":
-                self.terminal_service.handle_account_management()
+                self.terminal_service.show_account_management()
             elif choice == "3":
-                self.terminal_service.handle_sinpe_transfers()
+                self.terminal_service.show_sinpe_transfer()
             elif choice == "4":
-                self.terminal_service.handle_phone_links()
+                self.terminal_service.show_phone_link_management()
             elif choice == "5":
-                self.terminal_service.handle_transaction_history()
+                self.terminal_service.show_transaction_history()
             elif choice == "6":
-                self.terminal_service.handle_admin_panel()
+                self.terminal_service.show_admin_panel()
             else:
                 console.print("[red]Invalid option. Please try again.[/red]")
 

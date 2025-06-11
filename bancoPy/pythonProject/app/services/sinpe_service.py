@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 class SinpeService:
-
     @staticmethod
     def find_phone_link_for_user(username: str):
         """

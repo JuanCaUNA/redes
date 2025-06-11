@@ -62,11 +62,19 @@ class Account(db.Model):
     )
 
     def to_dict(self):
+        # Get the first linked user ID if available
+        user_id = None
+        if self.user_accounts and len(self.user_accounts) > 0:
+            user_id = self.user_accounts[0].user_id
+
         return {
             "id": self.id,
             "number": self.number,
+            "iban": f"CR210152{self.number}",  # Generate IBAN from account number
+            "account_type": "savings",  # Default account type
             "currency": self.currency,
             "balance": float(self.balance),
+            "user_id": user_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

@@ -18,7 +18,6 @@ import uuid
 
 
 class DatabaseService:
-
     def create_sample_data(self):
         """Create sample data for testing"""
 

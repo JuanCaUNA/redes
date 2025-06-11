@@ -17,7 +17,7 @@ console = Console()
 
 class TerminalService:
     def __init__(self):
-        self.base_url = "http://127.0.0.1:5000/api"
+        self.base_url = "https://127.0.0.1:5443/api"
         self.current_user = None
 
     def show_user_management(self):
@@ -57,7 +57,7 @@ class TerminalService:
     def list_users(self):
         """List all users"""
         try:
-            response = requests.get(f"{self.base_url}/users")
+            response = requests.get(f"{self.base_url}/users", verify=False)
             if response.status_code == 200:
                 data = response.json()
                 users = data["data"]
@@ -96,7 +96,7 @@ class TerminalService:
         try:
             data = {"name": name, "email": email, "phone": phone, "password": password}
 
-            response = requests.post(f"{self.base_url}/users", json=data)
+            response = requests.post(f"{self.base_url}/users", json=data, verify=False)
             if response.status_code == 201:
                 console.print("[green]✓ User created successfully[/green]")
             else:
@@ -116,7 +116,9 @@ class TerminalService:
 
         try:
             data = {"username": username, "password": password}
-            response = requests.post(f"{self.base_url}/auth/login", json=data)
+            response = requests.post(
+                f"{self.base_url}/auth/login", json=data, verify=False
+            )
 
             if response.status_code == 200:
                 result = response.json()
@@ -133,7 +135,7 @@ class TerminalService:
     def logout_user(self):
         """Logout user"""
         try:
-            requests.post(f"{self.base_url}/auth/logout")
+            requests.post(f"{self.base_url}/auth/logout", verify=False)
             self.current_user = None
             console.print("[green]✓ Logged out successfully[/green]")
         except Exception as e:
@@ -176,25 +178,26 @@ class TerminalService:
     def list_accounts(self):
         """List all accounts"""
         try:
-            response = requests.get(f"{self.base_url}/accounts")
+            response = requests.get(f"{self.base_url}/accounts", verify=False)
             if response.status_code == 200:
                 data = response.json()
                 accounts = data["data"]
 
                 table = Table(title="💰 All Accounts")
                 table.add_column("ID", style="cyan")
-                table.add_column("Number", style="green")
-                table.add_column("Currency", style="blue")
+                table.add_column("IBAN", style="green")
+                table.add_column("Type", style="blue")
                 table.add_column("Balance", style="yellow", justify="right")
+                table.add_column("User", style="magenta")
                 table.add_column("Created", style="dim")
 
                 for account in accounts:
-                    balance_text = f"{account['balance']:,.2f}"
                     table.add_row(
                         str(account["id"]),
-                        account["number"],
-                        account["currency"],
-                        balance_text,
+                        account["iban"],
+                        account["account_type"],
+                        f"{account['balance']:,.2f} {account['currency']}",
+                        str(account["user_id"]),
                         account["created_at"][:10] if account["created_at"] else "N/A",
                     )
 
@@ -208,25 +211,24 @@ class TerminalService:
         """Create new account"""
         console.print("\n[bold green]Create New Account[/bold green]")
 
-        balance = FloatPrompt.ask("Initial balance", default=0.0)
+        user_id = Prompt.ask("User ID")
+        account_type = Prompt.ask("Account Type", choices=["savings", "checking"])
         currency = Prompt.ask("Currency", default="CRC")
-
-        # Optional: link to user
-        link_user = Confirm.ask("Link to a user?")
-        user_id = None
-        if link_user:
-            user_id = Prompt.ask("User ID (number)")
+        initial_balance = FloatPrompt.ask("Initial Balance", default=0.0)
 
         try:
-            data = {"balance": balance, "currency": currency}
-            if user_id:
-                data["user_id"] = int(user_id)
+            data = {
+                "user_id": user_id,
+                "account_type": account_type,
+                "currency": currency,
+                "balance": initial_balance,
+            }
 
-            response = requests.post(f"{self.base_url}/accounts", json=data)
+            response = requests.post(
+                f"{self.base_url}/accounts", json=data, verify=False
+            )
             if response.status_code == 201:
-                result = response.json()
-                account = result["data"]
-                console.print(f"[green]✓ Account created: {account['number']}[/green]")
+                console.print("[green]✓ Account created successfully[/green]")
             else:
                 error_data = response.json()
                 console.print(
@@ -237,10 +239,14 @@ class TerminalService:
 
     def view_user_accounts(self):
         """View accounts for a specific user"""
-        user_id = Prompt.ask("Enter User ID")
+        console.print("\n[bold green]View User Accounts[/bold green]")
+
+        user_id = Prompt.ask("User ID")
 
         try:
-            response = requests.get(f"{self.base_url}/users/{user_id}/accounts")
+            response = requests.get(
+                f"{self.base_url}/users/{user_id}/accounts", verify=False
+            )
             if response.status_code == 200:
                 data = response.json()
                 accounts = data["data"]
@@ -249,14 +255,21 @@ class TerminalService:
                     console.print("[yellow]No accounts found for this user[/yellow]")
                     return
 
-                table = Table(title=f"💰 Accounts for User ID {user_id}")
-                table.add_column("Number", style="green")
-                table.add_column("Currency", style="blue")
+                table = Table(title=f"💰 Accounts for User {user_id}")
+                table.add_column("ID", style="cyan")
+                table.add_column("IBAN", style="green")
+                table.add_column("Type", style="blue")
                 table.add_column("Balance", style="yellow", justify="right")
+                table.add_column("Created", style="dim")
 
                 for account in accounts:
-                    balance_text = f"{account['balance']:,.2f}"
-                    table.add_row(account["number"], account["currency"], balance_text)
+                    table.add_row(
+                        str(account["id"]),
+                        account["iban"],
+                        account["account_type"],
+                        f"{account['balance']:,.2f} {account['currency']}",
+                        account["created_at"][:10] if account["created_at"] else "N/A",
+                    )
 
                 console.print(table)
             else:
@@ -371,7 +384,7 @@ class TerminalService:
         console.print(Panel("📊 Transaction History", style="bold yellow"))
 
         try:
-            response = requests.get(f"{self.base_url}/transactions")
+            response = requests.get(f"{self.base_url}/transactions", verify=False)
             if response.status_code == 200:
                 data = response.json()
                 transactions = data["data"]
@@ -454,15 +467,19 @@ class TerminalService:
     def list_phone_links(self):
         """List all phone links"""
         try:
-            response = requests.get(f"{self.base_url}/phone-links")
+            response = requests.get(f"{self.base_url}/phone-links", verify=False)
             if response.status_code == 200:
                 data = response.json()
                 links = data["data"]
 
-                table = Table(title="🔗 Phone Links")
+                if not links:
+                    console.print("[yellow]No phone links found[/yellow]")
+                    return
+
+                table = Table(title="📱 Phone Links")
                 table.add_column("ID", style="cyan")
-                table.add_column("Account Number", style="green")
-                table.add_column("Phone", style="yellow")
+                table.add_column("Account", style="green")
+                table.add_column("Phone", style="blue")
                 table.add_column("Created", style="dim")
 
                 for link in links:
@@ -487,9 +504,14 @@ class TerminalService:
         phone = Prompt.ask("Phone number")
 
         try:
-            data = {"account_number": account_number, "phone": phone}
+            data = {
+                "account_number": account_number,
+                "phone": phone,
+            }
 
-            response = requests.post(f"{self.base_url}/phone-links", json=data)
+            response = requests.post(
+                f"{self.base_url}/phone-links", json=data, verify=False
+            )
             if response.status_code == 201:
                 console.print("[green]✓ Phone link created successfully[/green]")
             else:
@@ -502,20 +524,33 @@ class TerminalService:
 
     def search_phone_link_by_phone(self):
         """Search phone link by phone number"""
+        console.print("\n[bold green]Search by Phone Number[/bold green]")
+
         phone = Prompt.ask("Phone number")
 
         try:
-            response = requests.get(f"{self.base_url}/phone-links/phone/{phone}")
+            response = requests.get(
+                f"{self.base_url}/phone-links/phone/{phone}", verify=False
+            )
             if response.status_code == 200:
                 data = response.json()
-                link = data["data"]
+                link = data.get("data")
 
-                console.print(f"[green]✓ Found link:[/green]")
-                console.print(f"  Account: {link['account_number']}")
-                console.print(f"  Phone: {link['phone']}")
-                console.print(f"  Created: {link['created_at']}")
+                if not link:
+                    console.print(
+                        "[yellow]No phone link found for this number[/yellow]"
+                    )
+                    return
+
+                console.print("\n[bold]Phone Link Details:[/bold]")
+                console.print(f"ID: {link['id']}")
+                console.print(f"Account: {link['account_number']}")
+                console.print(f"Phone: {link['phone']}")
+                console.print(
+                    f"Created: {link['created_at'][:10] if link['created_at'] else 'N/A'}"
+                )
             else:
-                console.print("[yellow]Phone link not found[/yellow]")
+                console.print(f"[red]Error: {response.text}[/red]")
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
 
@@ -625,7 +660,7 @@ class TerminalService:
         phone = Prompt.ask("Phone number to validate")
 
         try:
-            response = requests.get(f"{self.base_url}/validate/{phone}")
+            response = requests.get(f"{self.base_url}/validate/{phone}", verify=False)
             if response.status_code == 200:
                 data = response.json()
                 console.print(f"[green]✓ Phone number is registered:[/green]")

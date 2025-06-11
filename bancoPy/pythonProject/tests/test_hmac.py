@@ -17,7 +17,6 @@ from app.utils.hmac_generator import (
 
 
 class TestHMACGeneration(unittest.TestCase):
-
     def test_account_transfer_hmac(self):
         """Test HMAC generation for account transfers"""
         account_number = "152001234567890"
